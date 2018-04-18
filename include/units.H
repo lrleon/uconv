@@ -593,7 +593,7 @@ inline double unit_convert(const Unit & src_unit,
       ALEPHTHROW(UnitConversionNotFound, s.str());
     }
 
-  return 10*(*fct)(val/10);
+  return (*fct)(val);
 }
 
 /** Convert a container of doubles expressed in `src_unit` to their
