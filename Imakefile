@@ -4,7 +4,7 @@
 
 ALEPHW = $(shell echo $$ALEPHW)
 
-SUBDIRS = include lib tests
+SUBDIRS = include lib 
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))

@@ -5,7 +5,8 @@
 # include <units.H>
 # include <units-list.H>
 
-# include <json.hpp>
+# include <json.hpp> // you can modify this path according to the
+		     // header location
 
 using json = nlohmann::json;
 
@@ -125,7 +126,7 @@ static json to_json(const PhysicalQuantity * const pq)
 string units_json()
 {
   json j;
-  j["Zen_physical_quantities"] =
+  j["uconv_physical_quantities"] =
     to_vector(PhysicalQuantity::quantities().maps<json>([] (auto p)
     { return to_json(p); }));
   return j.dump(2);

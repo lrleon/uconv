@@ -4,8 +4,8 @@ ALEPHW = $(shell echo $$ALEPHW)
 
 INCLUDES = -I../include -I$(ALEPHW) 
 WARN= -Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings -Wno-parentheses
-#OPTFLAGS = -Ofast -DNDEBUG
-OPTFLAGS = -O0 -g
+
+OPTFLAGS = -O2
 FLAGS = -std=c++14 $(WARN) $(OPTFLAGS)
 
 OPTIONS = $(FLAGS)
@@ -18,11 +18,11 @@ UNITSPATH = $(TOP)/include/
 HSRC = $(shell ls $(UNITSPATH)*.H)
 
 SRCS = $(LIBSRCS)
-OBJS = zen.o xxhash.o
+OBJS = uconv.o xxhash.o
 
 EXTRACT_CV = $(TOP)/bin/extract-cv
 
-zen.cc: $(TOP)/include/units.H units-vars.cc $(HSRC)
+uconv.cc: $(TOP)/include/units.H units-vars.cc $(HSRC)
 	$(RM) -f $@;					\	@@\
 	$(CP) preamble.txt $*.tmp;			\	@@\
 	$(CPP) $(CXXFLAGS) units-vars.cc >> $*.tmp;	\	@@\
@@ -30,13 +30,13 @@ zen.cc: $(TOP)/include/units.H units-vars.cc $(HSRC)
 	$(EXTRACT_CV) $*.tmp >> $@;			\	@@\
 	$(RM) $*.tmp
 
-zen.o:: zen.cc
+uconv.o:: uconv.cc
 
 clean::
-	$(RM) -f zen.cc
+	$(RM) -f uconv.cc
 
 NormalLibraryObjectRule()
-NormalLibraryTarget(zen,$(OBJS))
-InstallLibrary(zen,./)
+NormalLibraryTarget(uconv,$(OBJS))
+InstallLibrary(uconv,./)
 
 DependTarget()
