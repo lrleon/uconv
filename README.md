@@ -81,11 +81,75 @@ with its own class:
 
 # H4 `Quantity` class
 
+`Quantity<Unit_Class_Name>` is designed for dealing units and its
+conversions in compiling time, without need of lookups in run time. In
+addition, the template fashion directly indicates the unit that is
+been used.
+
+As example, let us consider the following function:
+
+    Quantity<Km_h> speed(const Quantity<Meter> & distance,
+	                     const Quantity<Hour> & time)
+    {
+      Quantity<Meter_h> ret_val = distance.raw() / time.raw();
+	  return ret_val;
+    }
+	
+The function computes the speed given the traversed distance and the
+lasted time. Distance is measured in meters and time in
+hours. However, conditioned to the existence of a conversion function,
+the distance and time could be in different units, kilometers or
+seconds, for example. So, you could have some like this:
+
+    Quantity<Kilometer> dist = 100;
+	Quantity<Second> t = 3600;
+	
+	Quantity<Meter_s> s = speed(dist, t);
+	
+It is very important to understand everything that happens in the last
+line. First, since the `speed()` function was designed for handling
+meters and hours, the conversions form meters to kilometers and from
+seconds to hours are performed. So, at the beginning of the `speed()`
+function, the `distance` and `time` parameters are already in meters
+and hours respectively. 
+
+Second, the return value of `speed()` function is a `Quantity` whose
+unit is `Km_h` (kilometers per hour) but the computation is done in
+`Meter_h` (meters per hour). It is logic to define the result in
+meters per hours because this is the unit that fits with the received
+parameters. However the return value was declared in `Km_h`
+(kilometers per hour), which should not pose any problem if the
+conversion from `Meter_s` towards `Km_h` has been defined. 
+
+Finally, it is time to mention the `raw()` method, which simply
+removes the unit and returns a double. This is very important to
+notice because if you performed some such as this:
+
+    Quantity<Meter_h> ret_val = distance / time;
+	
+Then the library would try to find a unit that combines `Meter` and
+`Second` units in the division operation. Such kind of unit is called
+*compounded* unit and it could be defined with `Declare_Compound_Unit`
+macro in this way:
+
+    Declare_Compound_Unit(Meter_h, "Mt/s", "meters per second",
+	                      Speed, 0, 299792458, Meter, Second);
+						  
+Compound units could be very useful to validate. However, they require
+to define many more conversions and especially to know the unit
+bounds, which increases the complexity. For this reason, it could be
+preferable to directly define speed units without indicating that they
+are compounded. Thus, in the example, we remove the units with the
+`raw()` method, next we perform the division, and finally we build a
+`Quantity<Meter_h>` object to store the result and express its unit.
+
 # H4 `VltQuantity` class
 
 # H3 Defining bounds tolerance
 
-# H2 Requirements
+# H2 Building
+
+# H3 Requirements
 
 - Aleph-w library, which can be downloaded from
   <https://github.com/lrleon/Aleph-w>. 
@@ -96,6 +160,10 @@ with its own class:
 `uconv` has only been tested on Linux systems, but it is supposed to
 run without problems on other systems where Aleph-w library is
 installed. 
+
+# H3 The `units-list.H` header file
+
+# H3 Installation
 
 # H2 Integration
 
