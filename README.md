@@ -1,13 +1,13 @@
-# H1 Units definitions and their conversion library
+# Units definitions and their conversion library
 
-# H2 Purpose
+## Purpose
 	
 `uconv` is a C++ library that allows units definitions and conversions
 between different physical units through simple classes for defining
 and handling physical quantities, units measuring them and quantities
 related to the units with transparent conversions. 
 
-# H3 Physical Quantities
+### Physical Quantities
 
 A physical quantity is defined with the macro 
 
@@ -22,7 +22,7 @@ would be grouped, as follows:
     Declare_Physical_Quantity(Temperature, "T", "T",
 			  "Average thermal energy of the particles in a substance");
 			  
-# H3 Units Definition
+### Units Definition
 
 A new unit is defined with the macro
 
@@ -47,7 +47,7 @@ escape each backslash belonging to LaTeX expression. This is the
 reason for which you see two backslashes in the string that defines
 the LaTeX symbol.
 
-# H3 Defining Unit Conversions
+### Defining Unit Conversions
 
 Unit conversion is relatively very easy if you use the
 `Declare_Conversion` macro whose syntax is as follows:
@@ -69,7 +69,7 @@ which implements the conversion. For example, for converting from
 parameter `t` is a double and in the function body (between `{}`) is
 written the conversion.
 
-# H3 Defining and Using Quantities
+### Defining and Using Quantities
 
 There are two ways for defining a quantity with its unit, everyone
 with its own class:
@@ -79,7 +79,7 @@ with its own class:
    
 2. `VtlQuantity`: a quantity whose unit is known in run time.
 
-# H4 `Quantity` class
+#### `Quantity` class
 
 `Quantity<Unit_Class_Name>` is designed for dealing units and its
 conversions in compiling time, without need of lookups in run time. In
@@ -143,13 +143,13 @@ are compounded. Thus, in the example, we remove the units with the
 `raw()` method, next we perform the division, and finally we build a
 `Quantity<Meter_h>` object to store the result and express its unit.
 
-# H4 `VltQuantity` class
+#### `VltQuantity` class
 
-# H3 Defining bounds tolerance
+### Defining bounds tolerance
 
-# H2 Building
+## Building
 
-# H3 Requirements
+### Requirements
 
 - Aleph-w library, which can be downloaded from
   <https://github.com/lrleon/Aleph-w>. 
@@ -161,12 +161,12 @@ are compounded. Thus, in the example, we remove the units with the
 run without problems on other systems where Aleph-w library is
 installed. 
 
-# H3 The `units-list.H` header file
+### The `units-list.H` header file
 
-# H3 Installation
+### Installation
 
-# H2 Integration
+## Integration
 
-# H2 Licence
+## Licence
 
-# H2 Examples
+## Examples
