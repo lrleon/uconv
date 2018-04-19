@@ -145,9 +145,24 @@ are compounded. Thus, in the example, we remove the units with the
 
 #### `VltQuantity` class
 
+`Quantity` class is very adequate for defining computations without
+worry for the entry units. Computations reflecting a physical
+phenomenon could be defined in a natural way, directly expressed in
+their original units.  The `speed()` function example clearly shows
+this kind of independence. Therefore, to the extent possible, we
+strongly advice to use `Quantity` class rather than `VtlQuantity`
+because it is safer and faster.
+
+However, there are situations where it is not possible or it is not
+desirable to know the units in which the computations will be
+expressed. Consider, for instance, to incorporate new operations in
+running time, some such like a new formula. 
+
 ### Defining bounds tolerance
 
-## Building
+
+
+## Integration
 
 ### Requirements
 
@@ -161,12 +176,12 @@ are compounded. Thus, in the example, we remove the units with the
 run without problems on other systems where Aleph-w library is
 installed. 
 
-### The `units-list.H` header file
+### Building
 
-### Installation
+#### The `units-list.H` header file
 
-## Integration
+#### Building the library
 
 ## Licence
 
-## Examples
+
