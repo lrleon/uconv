@@ -6,12 +6,12 @@ require 'fileutils'
 
 alephw = ENV['ALEPHW']
 gtestdir = ENV['GOOGLETEST']
-zendir = ENV['ZEN']
+uconv = ENV['UCONV']
 
 
 fail 'ALEPHW env var has not been defined' unless alephw
 fail 'GOOGLETEST env var has not been defined' unless gtestdir
-fail 'ZEN env var has not been defined' unless zendir
+fail 'UCONV  env var has not been defined' unless uconv
 
 options = {}
 options_parser = OptionParser.new do |opts|
@@ -38,12 +38,12 @@ tgt_name = File.basename test_src_name, '.cc'
 
 compile_line = "clang++ #{test_src_name} "\
                "-std=c++14 -isystem -pthread -I#{alephw} "\
-               "-I#{zendir}/include "\
+               "-I#{uconv}/include "\
                "-I#{gtestdir}/googletest/include "\
                "-I#{gtestdir}/googlemock/include "\
                "-std=c++14 -Wall -Wextra -Wcast-align -Wno-sign-compare "\
                "-Wno-write-strings -Wno-parentheses -O0 -g "\
-               "-L#{zendir}/lib -lzen "\
+               "-L#{uconv}/lib -luconv "\
                "-L#{alephw} -lAleph #{gtestdir}/googletest/make/gtest_main.a "\
                "#{gtestdir}/googlemock/make/gmock_main.a "\
                "-lstdc++ -lgsl -lgslcblas -lm -lpthread -lc -o #{tgt_name}"

@@ -740,7 +740,7 @@ extern double unit_convert(const char * src_symbol, const char * tgt_symbol,
 
     This macro should be the ideal way for declaring a new unit. It
     creates the unit and prepares all the terrain for conversions
-    specific cations. 
+    specificcations. 
 
     @param[in] __name of unit
     @param[in] symbol of unit
