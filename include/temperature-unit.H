@@ -2,7 +2,7 @@
 # ifndef TEMPERATURE_UNIT_H
 # define TEMPERATURE_UNIT_H
 
-# include "units.H"
+# include "uconv.H"
 
 Declare_Physical_Quantity(Temperature, "T","T",
 			  "Average thermal energy of the particles in a substance");

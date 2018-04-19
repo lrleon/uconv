@@ -143,6 +143,13 @@ are compounded. Thus, in the example, we remove the units with the
 `raw()` method, next we perform the division, and finally we build a
 `Quantity<Meter_h>` object to store the result and express its unit.
 
+When a conversion is required but this one has not been defined, a
+compiler error will be generated.
+
+`Quantity` object always require to know their unit. Consequently, it
+is not possible to instantiate a empty `Quantity`, without a value,
+because if not the boundary check could not be performed.
+
 #### `VltQuantity` class
 
 `Quantity` class is very adequate for defining computations without
@@ -153,34 +160,92 @@ this kind of independence. Therefore, to the extent possible, we
 strongly advice to use `Quantity` class rather than `VtlQuantity`
 because it is safer and faster.
 
-However, there are situations where it is not possible or it is not
-desirable to know the units in which the computations will be
-expressed. Consider, for instance, to incorporate new operations in
-running time, some such like a new formula. 
+However, there are situations where it is not possible or desirable to
+know the units in which the computations will be expressed. Consider,
+for instance, to incorporate new operations in running time, some such
+like a new formula. In this case, a `Quantity` object is not
+applicable because it requires to know the unit type in
+compiling time. For dealing with situations like this, the
+`VtlQuantity` class is provided. 
+
+There is not so much difference between a `Quantity` and a
+`Vtlquantity` object. Essentially, the main difference is that the
+`Vtlquantity` constructor requires the unit as part of its parameters
+(to the difference of `Quantity` that receives the unit as a template
+parameter). 
+
+The price of a `Vtlquantity` object is the possibility of a table look
+up in order to find the conversion function. Apart of that, practically
+use of `Quantity` and `VtlQuantity` is very similar. In fact, you can
+arbitrarily combine them.
+
+#### Mathematical operations
+
+`uconv` export some mathematical operations.  In all operations, the
+unit limits are checked. 
+
+The main binary mathematical operators `+`, `-`, `*` and `/` are
+exported. Each binary operation can receive, `Quantity`, `VtlQuantity`
+or double objects. If a double is received, then it is assumed that
+its unit is the same than the another operand.  `+` and `-` operators
+require that both operands are in the same unit. In the case of `*`
+and `/` operands, the compound unit corresponding to the result is
+required.
+
+Other wrappers to C mathematical functions are provided: `pow()`,
+`exp()`, `log10()`, `sqrt()`, etc. All this functions return a double.
 
 ### Defining bounds tolerance
 
+Since the most of conversions involve floating point operations, the
+units limits are verified respect a tolerance value called epsilon. By
+default, this value is `1e-6` but it can be set to any other
+value. Let be `min-val` and `max-val` the limits of some unit. Then,
+the limits check is done on the interval `[min-val - epsilon,
+max-val + epsilon]`. Notice that without this tolerance, then we could
+get an `OutOfUnitRange` exception if, for example, we convert
+`min-value` to another unit and we return again on the original unit. 
 
+### The `uconv-list.H` header file
+
+The current way for indicating to the library which are the units is
+through file inclusion in the `uconv-list.H` header file. When the
+library is built, the system will search this file in order to
+generate all the needed bookkeeping.
 
 ## Integration
 
+In order to use `uconv`, you require:
+
+1. Include the header `uconv.H` in the places of your project using
+   units and conversions.
+
+2. Define your physical magnitudes along with their units (or reuse
+   them). In order to do that, we advice to create a file for each
+   physical magnitude, define it along its units and put there the
+   required conversion functions.
+   
+3. Edit the `uconv-list.H` header file and put there header inclusions
+   for everyone of your units. Here, you
+   
+4. Generate the `uconvlib.a` and link it to your project.
+
 ### Requirements
 
-- Aleph-w library, which can be downloaded from
-  <https://github.com/lrleon/Aleph-w>. 
+In order to use `uconv` you need Aleph-w library, which can be downloaded from
+<https://github.com/lrleon/Aleph-w>. 
 
-- Niels Lohmann (nlohmann) json library, which can be downloaded from 
-  <https://github.com/nlohmann/json>.
+For generating the library you need the Niels Lohmann (nlohmann) json
+  library, which can be downloaded from <https://github.com/nlohmann/json>.
 
 `uconv` has only been tested on Linux systems, but it is supposed to
 run without problems on other systems where Aleph-w library is
 installed. 
 
-### Building
+### Building the library
 
-#### The `units-list.H` header file
-
-#### Building the library
+First go to the `lib` directory. Next edit the `Imakefile` and put in 
+configure there the path where the Niels Lohmann json is 
 
 ## Licence
 

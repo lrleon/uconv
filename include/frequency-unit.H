@@ -1,7 +1,7 @@
 #ifndef FREQUENCY_UNIT_H
 #define FREQUENCY_UNIT_H
 
-# include "units.H"
+# include "uconv.H"
 
 Declare_Physical_Quantity(Frequency, "f", "\\nu",
 			  "Number of occurrences of a repeating event "

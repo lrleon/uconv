@@ -1,7 +1,7 @@
 # ifndef AREA_UNIT_H
 # define AREA_UNIT_H
 
-# include <units.H>
+# include <uconv.H>
 
 Declare_Physical_Quantity(Area, "A", "A",
 			  "extent of a two-dimensional figure or shape")

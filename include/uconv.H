@@ -449,7 +449,7 @@ template <class SrcUnit, class TgtUnit> inline
 double unit_convert(double /* val */)
 {
   static_assert(__always_false<SrcUnit, TgtUnit>::value,
-		"No specialization exists!");
+		"No conversion found!");
   return 0;
 }
 

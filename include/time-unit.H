@@ -1,7 +1,7 @@
 # ifndef TIME_UNIT_H
 # define TIME_UNIT_H
 
-# include "units.H"
+# include "uconv.H"
 
 Declare_Physical_Quantity(Time, "t", "t",
 			  "The mythical and mysterious fourth dimension");

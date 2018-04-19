@@ -1,13 +1,10 @@
 # ifndef DENSITY_UNIT_H
 # define DENSITY_UNIT_H
 
-# include "units.H"
+# include "uconv.H"
 
 Declare_Physical_Quantity(Density, "rho", "\\rho",
-		R"DESC(The density of a substance (oil) is its mass
-        per unit volume. NOTE: The official density of 
-        water at 60 °F according to the 2008 edition of
-        ASTM D1250 is 999.016 kg/m3)DESC");
+			  "The density of a substance is its mass per unit volume");
 
 Declare_Unit(Gr_cm3, "gr/cm3","g/cm^{3}",
 	    R"DESC(unit of density declared as gr (mass in gram) per cm3

@@ -1,7 +1,7 @@
 # ifndef DUMMY_UNIT_H
 # define DUMMY_UNIT_H
 
-# include "units.H"
+# include "uconv.H"
 
 Declare_Physical_Quantity(DummyUnit, "Dummy", "Dummy", "Only for testing");
 

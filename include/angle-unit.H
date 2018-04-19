@@ -2,7 +2,7 @@
 # define ANGLE_UNIT_H
 
 # include <cmath>
-# include "units.H"
+# include "uconv.H"
 
 Declare_Physical_Quantity(Angle, "angle", "\\angle",
 			  "figure formed by two rays sharing a common endpoint");

@@ -1,7 +1,7 @@
 #ifndef FLOWRATE_UNIT_H
 #define FLOWRATE_UNIT_H
 
-# include "units.H"
+# include "uconv.H"
 
 Declare_Physical_Quantity(FlowRate, "Q", "Q",
 			  "Volume rate of some fluid flow that is transported "

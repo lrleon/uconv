@@ -1,7 +1,7 @@
 # ifndef VELOCITY_UNIT_H
 # define VELOCITY_UNIT_H
 
-# include "units.H"
+# include "uconv.H"
 
 Declare_Physical_Quantity(Velocity, "V", "V", "Rate of change of position");
 
