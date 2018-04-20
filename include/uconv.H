@@ -3,8 +3,8 @@
     Aleph-w Leandro Rabindranath Leon    
  */
 
-# ifndef UNITS_H
-# define UNITS_H
+# ifndef UCONV_H
+# define UCONV_H
 
 # include <memory>
 # include <typeinfo>
@@ -21,7 +21,7 @@
 
 using namespace std;
 
-# define UNIT_INVALID_VALUE (-1000)
+constexpr double Unit_Invalid_Value = -1000;
 
 class Unit;
 
@@ -896,7 +896,7 @@ public:
     if (value >= vmin and value <= vmax)
       return true;
 
-    if (value <= UNIT_INVALID_VALUE)
+    if (value <= Unit_Invalid_Value)
       return false;
 
     const double & epsilon = unit.get_epsilon();
@@ -2400,5 +2400,5 @@ inline VtlQuantity prev_value(const VtlQuantity & val)
   return VtlQuantity(val.unit, prev_value(val.raw()));
 }
 
-# endif // UNITS_H
+# endif 
 

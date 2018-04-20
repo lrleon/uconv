@@ -31,7 +31,7 @@ A new unit is defined with the macro
                  min-value, max-value);
 				 
 This macro declares a class that defines a new unit related to
-`Physical_Quantity' class which should be previously already
+`Physical_Quantity` class which should be previously already
 declared. `min-value` and `max-value` are doubles defining the lower
 and upper bounds of the unit.
 
