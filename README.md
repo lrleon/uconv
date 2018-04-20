@@ -232,11 +232,9 @@ In order to use `uconv`, you require:
 
 ### Requirements
 
-In order to use `uconv` you need Aleph-w library, which can be downloaded from
-<https://github.com/lrleon/Aleph-w>. 
-
-For generating the library you need the Niels Lohmann (nlohmann) json
-  library, which can be downloaded from <https://github.com/nlohmann/json>.
+You will need Aleph-w library, which can be downloaded from
+<https://github.com/lrleon/Aleph-w> and the Niels Lohmann (nlohmann) json
+library, which can be downloaded from <https://github.com/nlohmann/json>.
 
 `uconv` has only been tested on Linux systems, but it is supposed to
 run without problems on other systems where Aleph-w library is
@@ -244,9 +242,21 @@ installed.
 
 ### Building the library
 
-First go to the `lib` directory. Next edit the `Imakefile` and put in 
-configure there the path where the Niels Lohmann json is 
+First, set the `ALEPHW` and `NLOHMANNJSON` environment variables to
+point to the directories where `Aleph-w` and Niels Lohmann json
+libraries are. Next, on the distribution directory, perform:
 
-## Licence
+    xmkmf
+	make Makefiles
+	make depend
+	
+Finally, go to `lib` directory and perform 
 
+	make 
+	
+This should build the file `uconlib.a` which contains the `uconv` library.
 
+## License
+
+See [LICENSE](https://github.com/lrleon/uconv/blob/master/LICENSE). Copyright
+(c) 2018 Leandro Rabindranath Leon.
