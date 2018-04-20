@@ -6,12 +6,12 @@ require 'fileutils'
 
 alephw = ENV['ALEPHW']
 gtestdir = ENV['GOOGLETEST']
-uconv = ENV['UCONV']
+uconv = '../'
 
 
 fail 'ALEPHW env var has not been defined' unless alephw
 fail 'GOOGLETEST env var has not been defined' unless gtestdir
-fail 'UCONV  env var has not been defined' unless uconv
+#fail 'UCONV  env var has not been defined' unless uconv
 
 options = {}
 options_parser = OptionParser.new do |opts|
