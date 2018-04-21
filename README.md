@@ -230,6 +230,18 @@ In order to use `uconv`, you require:
    
 4. Generate the `uconvlib.a` and link it to your project.
 
+`uconv` internally uses several tables for storing physical quantities
+names, units and conversions. For this reason, it is imperative to
+explicitly initialize the library. The most recommended way for doing
+that with `UnitsInstancer` class, which is a singleton and that
+must be called before any use of `uconv`. As general rule, we
+recommend to put the instantiation just next the `uconv-list.H` header
+inclusion. Some such this:
+
+	# include <uconv-list.H>
+	UnitsInstancer init; // or any other name that you want
+	// here you could put other header inclusions
+
 ### Requirements
 
 You will need Aleph-w library, which can be downloaded from

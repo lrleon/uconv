@@ -54,7 +54,8 @@ UnitsInstancer::UnitsInstancer()
 {
   static size_t count = 0;
   if (count++ > 0)
-    ALEPHTHROW(InvariantError, "UnitsInstancer::UnitsInstancer() called twice");
+    return;
+  
   static UnitItemTable physicalquantity_tbl;
   static UnitItemTable unit_tbl;
   static DynSetTree<const Unit *> unit_unit_tbl;
