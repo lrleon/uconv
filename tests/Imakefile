@@ -1,0 +1,36 @@
+DEPEND = sh ./depend.sh
+
+INCLUDES = -I$(TOP)/include -I$(ALEPHW) 
+WARN= -Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings\
+	-Wno-parentheses
+
+#OPTFLAGS = -Ofast -DNDEBUG
+OPTFLAGS = -O0 -g
+FLAGS = -std=c++14 $(WARN) $(OPTFLAGS)
+#FLAGS = -std=c++14 $(WARN) -Ofast -DNDEBUG
+
+OPTIONS = $(FLAGS)
+CXXFLAGS= -std=c++14 $(INCLUDES) $(OPTIONS)
+
+SYS_LIBRARIES = -L$(ALEPHW) -lAleph -lstdc++ -lgsl -lgslcblas -lm -lc
+
+DEPLIBS	= $(TOP)/lib/libuconv.a $(ALEPHW)/libAleph.a
+
+LOCAL_LIBRARIES = $(TOP)/lib/libuconv.a
+
+TESTSRCS = test-all-units.cc conversion.cc vector-conversion.cc 
+
+TESTOBJS = $(TESTSRCS:.cc=.o)
+
+SRCS = $(TESTSRCS)
+
+AllTarget(conversion)
+NormalProgramTarget(conversion,conversion.o,$(DEPLIBS),$(LOCAL_LIBRARIES),$(SYS_LIBRARIES))
+
+AllTarget(vector-conversion)
+NormalProgramTarget(vector-conversion,vector-conversion.o,$(DEPLIBS),$(LOCAL_LIBRARIES),$(SYS_LIBRARIES))
+
+AllTarget(test-all-units)
+NormalProgramTarget(test-all-units,test-all-units.o,$(DEPLIBS),$(LOCAL_LIBRARIES),$(SYS_LIBRARIES))
+
+DependTarget()
