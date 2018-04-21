@@ -8,6 +8,8 @@
 
 using namespace TCLAP;
 
+UnitsInstancer init;
+
 const Unit * search_unit(const string & name)
 {
   auto unit_ptr = Unit::search_by_name(name);

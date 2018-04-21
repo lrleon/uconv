@@ -19,9 +19,23 @@ UNITSPATH = $(TOP)/include
 SRCS = uconv.cc
 OBJS = uconv.o 
 
+EXTRACT_CV = $(TOP)/bin/extract-cv
+
+units.cc: $(TOP)/include/uconv.H uconv.cc $(HSRC)
+	$(RM) -f $@;					\	@@\
+	$(CP) preamble.txt $*.tmp;			\	@@\
+	$(CPP) $(CXXFLAGS) uconv.cc >> $*.tmp;		\	@@\
+	cat uconv.cc >> $@;				\	@@\
+	$(EXTRACT_CV) $*.tmp >> $@;			\	@@\
+	$(RM) $*.tmp
+
+units.o:: units.cc
+
+clean::
+	$(RM) -f units.cc
 
 NormalLibraryObjectRule()
-NormalLibraryTarget(uconv,$(OBJS))
+NormalLibraryTarget(uconv,units.o)
 InstallLibrary(uconv,./)
 
 DependTarget()

@@ -30,7 +30,9 @@ class Unit;
     @ingroup Units
     @author Leandro Rabindranath Leon
  */
-class UnitsInstancer
+struct
+
+UnitsInstancer
 {
   UnitsInstancer();
 public:
