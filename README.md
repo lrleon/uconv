@@ -236,6 +236,8 @@ You will need Aleph-w library, which can be downloaded from
 <https://github.com/lrleon/Aleph-w> and the Niels Lohmann (nlohmann) json
 library, which can be downloaded from <https://github.com/nlohmann/json>.
 
+In order to build
+
 `uconv` has only been tested on Linux systems, but it is supposed to
 run without problems on other systems where Aleph-w library is
 installed. 

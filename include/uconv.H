@@ -772,7 +772,6 @@ extern double unit_convert(const char * src_symbol, const char * tgt_symbol,
     void operator = (const __name&) = delete;				\
   };									\
 									\
-  extern UnitConverter<__name, __name> __uc__##__name##__to__##__name;	\
   template <> inline double unit_convert<__name, __name>(double val)	\
   { return val; }
 
