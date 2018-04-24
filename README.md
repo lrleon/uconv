@@ -233,10 +233,10 @@ In order to use `uconv`, you require:
 `uconv` internally uses several tables for storing physical quantities
 names, units and conversions. For this reason, it is imperative to
 explicitly initialize the library. The most recommended way for doing
-that with `UnitsInstancer` class, which is a singleton and that
-must be called before any use of `uconv`. As general rule, we
-recommend to put the instantiation just next the `uconv-list.H` header
-inclusion. Some such this:
+that with `UnitsInstancer` class, which is a singleton and that must
+be called before any use of `uconv`. As general rule, we recommend to
+instantiate just next the `uconv-list.H` header inclusion. Some such
+this:
 
 	# include <uconv-list.H>
 	UnitsInstancer init; // or any other name that you want
