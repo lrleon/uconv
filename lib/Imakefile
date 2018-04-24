@@ -21,7 +21,7 @@ OBJS = uconv.o
 
 EXTRACT_CV = $(TOP)/bin/extract-cv
 
-units.cc: $(TOP)/include/uconv.H uconv.cc $(HSRC)
+units.cc: $(TOP)/include/uconv.H uconv.cc
 	$(RM) -f $@;					\	@@\
 	$(CP) preamble.txt $*.tmp;			\	@@\
 	$(CPP) $(CXXFLAGS) uconv.cc >> $*.tmp;		\	@@\

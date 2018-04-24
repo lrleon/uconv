@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+# -*- coding: iso-8859-1 -*-
+
+require 'optparse'
+
+options = {}
+options_parser = OptionParser.new do |opts|
+
+  opts.on('-U path', '--units-path path',
+          'path to units directory') do |path|
+    options[:upath] =
+    
+  end
+
+end
+
+lines = `grep "UnitConverter.*__uc__" "#{file_name}"`.split("\n")
+
+puts "static void init_unit_converters()\n"\
+     "{\n"
+lines.each do |line|
+  r = line.match(/UnitConverter<.*,.*> __uc__.*__to__[^;.]*;/)
+  puts "  #{r[0]}"
+end
+puts "}"

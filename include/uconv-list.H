@@ -23,15 +23,15 @@
 
 # include "uconv.H"
 
-# include "temperature-unit.H"
-# include "pressure-unit.H"
-# include "density-unit.H"
-# include "frequency-unit.H"
-# include "current-unit.H"
-# include "angle-unit.H"
-# include "time-unit.H"
-# include "area-unit.H"
+# include "units/temperature-unit.H"
+# include "units/pressure-unit.H"
+# include "units/density-unit.H"
+# include "units/frequency-unit.H"
+# include "units/current-unit.H"
+# include "units/angle-unit.H"
+# include "units/time-unit.H"
+# include "units/area-unit.H"
 
-# include "dummy-unit.H"
+# include "units/dummy-unit.H"
 
 # endif // UNITS_LISTS_H
