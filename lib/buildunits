@@ -15,19 +15,19 @@ options_parser = OptionParser.new do |opts|
 
   opts.on('-U uconv-list-file', '--units-path uconv-list-file',
           'full path to uconv-list header') do |path|
-    options[:units_path] = path
+    options[:units_file] = path
   end
 
   opts.on('-H path-to-uconv-header', '--path-uconv path-to-uconv-header',
           'full path to uconv-list header') do |path|
-    options[:uconv] = path
+    options[:uconv_path] = path
   end
 end
 
 options_parser.parse!
 
-units_file = options[:units_path]
-uconv_file = options[:uconv]
+units_file = options[:units_file]
+uconv_path = options[:uconv_path]
 
 fail 'uconv-list-file has not been specified' unless units_file
 fail "#{units_file}  does not exist" unless File.exists?(units_file)
@@ -38,7 +38,7 @@ ucontent = %Q(
 # include <ah-stl-utils.H>
 
 # include <uconv.H>
-# include "<#{units_file}"
+# include "#{units_file}"
 
 # include <nlohmann/json.hpp> 
 
@@ -173,12 +173,17 @@ const UnitsInstancer & units_instance = UnitsInstancer::init();
 )
 
 file = ucontent
-includes = "-I#{alephw} -I#{json}"
-flags = "-Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings "\
-        "-Wno-parentheses -O2 -DNDEBUG"
-symbols_file = `cpp #{includes} #{flags} < #{file}`
 
-lines = `grep "UnitConverter.*__uc__" "#{file_name}"`.split("\n")
+src = File.new('uconv_tmp.cc', 'w')
+src.write ucontent
+src.close
+
+includes = "-I#{uconv_path} -I#{alephw} -I#{json}/include"
+flags = "-Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings "\
+        "-Wno-parentheses -O2 -DNDEBUG -std=c++14"
+symbols_file = `cpp #{includes} #{flags} uconv_tmp.cc`
+
+#lines = `grep "UnitConverter.*__uc__" "< #{symbols_file}"`.split("\n")
 
 file += "\n"\
         "static void init_unit_converters()\n"\
@@ -189,5 +194,5 @@ lines.each do |line|
 end
 file += "}"
 
-puts file
+#puts file
 
