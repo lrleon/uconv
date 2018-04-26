@@ -6,7 +6,6 @@ require 'fileutils'
 
 alephw = ENV['ALEPHW']
 json = ENV['JSON']
-#includes = "-I#{include_path}"
 
 fail 'Aleph-w environment variable has not been defined' unless alephw
 fail 'Niels Lohmann json library environment variable has not been defined' unless json
@@ -39,7 +38,7 @@ ucontent = %Q(
 # include <ah-stl-utils.H>
 
 # include <uconv.H>
-# include <#{units_file}>
+# include "<#{units_file}"
 
 # include <nlohmann/json.hpp> 
 
@@ -174,16 +173,21 @@ const UnitsInstancer & units_instance = UnitsInstancer::init();
 )
 
 file = ucontent
-#symbols_file = `cpp `
+includes = "-I#{alephw} -I#{json}"
+flags = "-Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings "\
+        "-Wno-parentheses -O2 -DNDEBUG"
+symbols_file = `cpp #{includes} #{flags} < #{file}`
+
+lines = `grep "UnitConverter.*__uc__" "#{file_name}"`.split("\n")
+
+file += "\n"\
+        "static void init_unit_converters()\n"\
+        "{\n"
+lines.each do |line|
+  r = line.match(/UnitConverter<.*,.*> __uc__.*__to__[^;.]*;/)
+  file += "  #{r[0]}"
+end
+file += "}"
 
 puts file
 
-# lines = `grep "UnitConverter.*__uc__" "#{file_name}"`.split("\n")
-
-# puts "static void init_unit_converters()\n"\
-#      "{\n"
-# lines.each do |line|
-#   r = line.match(/UnitConverter<.*,.*> __uc__.*__to__[^;.]*;/)
-#   puts "  #{r[0]}"
-# end
-# puts "}"
