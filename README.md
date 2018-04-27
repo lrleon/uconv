@@ -284,5 +284,11 @@ This should build the file `uconlib.a` which contains the `uconv` library.
 
 ## License
 
-See [LICENSE](https://github.com/lrleon/uconv/blob/master/LICENSE). Copyright
-(c) 2018 Leandro Rabindranath Leon.
+Since `uconv` depends on components that are licensed GNU GPL v3,
+`uconv` is also licensed on the GNU GPL v3.
+
+See
+[LICENSE](https://github.com/lrleon/uconv/blob/master/LICENSE). COPYRIGHT
+(c) 2018, Ixhel Mejias, Alberto Valderrama, Fernando Montilla, Eduardo
+Valderrama, Neylith Quintero, Felix Buccellato, Virginia Buccellato
+and Leandro Rabindranath Leon
