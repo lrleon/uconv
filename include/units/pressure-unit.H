@@ -1,4 +1,3 @@
-
 /*
    _   _  ___ ___  _ ____   __
   | | | |/ __/ _ \| '_ \ \ / /  C++ Physical magnitudes and units conversion
@@ -9,11 +8,6 @@
 
   Copyright (c) 2018     Ixhel Mejias
                          Alberto Valderrama
-                         Fernando Montilla
-                         Eduardo Valderrama
-                         Neylith Quintero
-                         Felix Buccellato
-                         Virginia Buccellato
                          Leandro Rabindranath Leon
 
   This program is free software: you can redistribute it and/or modify
@@ -29,7 +23,6 @@
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-
 # ifndef PRESSURE_UNIT_H
 # define PRESSURE_UNIT_H
 

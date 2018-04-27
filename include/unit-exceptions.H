@@ -8,11 +8,6 @@
 
   Copyright (c) 2018     Ixhel Mejias
                          Alberto Valderrama
-                         Fernando Montilla
-                         Eduardo Valderrama
-                         Neylith Quintero
-                         Felix Buccellato
-                         Virginia Buccellato
                          Leandro Rabindranath Leon
 
   This program is free software: you can redistribute it and/or modify
@@ -27,8 +22,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
-*/
-#ifndef UNIT_EXCEPTIONS_H
+*/#ifndef UNIT_EXCEPTIONS_H
 #define UNIT_EXCEPTIONS_H
 
 # include <aleph-exceptions.H>

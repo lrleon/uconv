@@ -4,8 +4,7 @@
 require 'fileutils'
 version = File.new('version.txt').read
 
-note = %Q<
-/*
+note = %Q</*
    _   _  ___ ___  _ ____   __
   | | | |/ __/ _ \\| '_ \\ \\ / /  C++ Physical magnitudes and units conversion
   | |_| | (_| (_) | | | \\ V /   Version #{version.chomp}
@@ -15,11 +14,6 @@ note = %Q<
 
   Copyright (c) 2018     Ixhel Mejias
                          Alberto Valderrama
-                         Fernando Montilla
-                         Eduardo Valderrama
-                         Neylith Quintero
-                         Felix Buccellato
-                         Virginia Buccellato
                          Leandro Rabindranath Leon
 
   This program is free software: you can redistribute it and/or modify
@@ -34,10 +28,11 @@ note = %Q<
 
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
-*/
->
+*/>
+
+pat = /[\s\n]*\/\*.* _   _  ___ ___  _ ____   __.*?\*\/\n/m
 
 file_name = ARGV.shift
 file = File.new(file_name).read
 
-puts note, file
+puts file.gsub(pat, note)

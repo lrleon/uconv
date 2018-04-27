@@ -1,7 +1,6 @@
-
 /*
    _   _  ___ ___  _ ____   __
-  | | | |/ __/ _ \| '_ \ \ / /  Physical magnitudes and units conversion
+  | | | |/ __/ _ \| '_ \ \ / /  C++ Physical magnitudes and units conversion
   | |_| | (_| (_) | | | \ V /   Version 1.0
    \__,_|\___\___/|_| |_|\_/    https://github.com/lrleon/uconv
 
@@ -9,11 +8,6 @@
 
   Copyright (c) 2018     Ixhel Mejias
                          Alberto Valderrama
-                         Fernando Montilla
-                         Eduardo Valderrama
-                         Neylith Quintero
-                         Felix Buccellato
-                         Virginia Buccellato
                          Leandro Rabindranath Leon
 
   This program is free software: you can redistribute it and/or modify
@@ -29,7 +23,6 @@
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-
 # include <unititem.H>
 
 int main()
