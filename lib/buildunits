@@ -209,7 +209,9 @@ file += "}"
 
 write_to_file 'libuconv.cc', file
 
+compiler_cmd = "#{compiler} #{includes} #{flags} -c o libuconv.o libuconv.cc"
 
+puts compiler_cmd
 
 File.delete 'uconv_tmp.cc'
 File.delete 'uconv_tmp.cxx'
