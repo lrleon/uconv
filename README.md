@@ -215,6 +215,13 @@ generate all the needed bookkeeping.
 
 ## Integration
 
+There are two ways for integrating `uconv` to your project. The first
+one is by adding your units directly to the library distribution and
+building it. The second way, which is the recommended, is by building
+your own library.
+
+#### Adding units to `uconv` distribution
+
 In order to use `uconv`, you require:
 
 1. Include the header `uconv.H` in the places of your project using
@@ -229,6 +236,11 @@ In order to use `uconv`, you require:
    for everyone of your units. Here, you
    
 4. Generate the `uconvlib.a` and link it to your project.
+
+#### Building your own `libuconv.a` library
+
+
+#### Usage in your project
 
 `uconv` internally uses several tables for storing physical quantities
 names, units and conversions. For this reason, it is imperative to

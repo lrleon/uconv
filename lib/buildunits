@@ -33,7 +33,7 @@ options_parser.parse!
 
 units_file = options[:units_file]
 uconv_path = options[:uconv_path]
-compiler = options[:compiler] ? 'c++' : options[:compiler]
+compiler = options[:compiler] ? options[:compiler] : 'c++' 
 
 fail 'uconv-list-file has not been specified' unless units_file
 fail "#{units_file}  does not exist" unless File.exists?(units_file)
@@ -209,9 +209,13 @@ file += "}"
 
 write_to_file 'libuconv.cc', file
 
-compiler_cmd = "#{compiler} #{includes} #{flags} -c o libuconv.o libuconv.cc"
+compiler_cmd = "#{compiler} #{includes} #{flags} -c -o libuconv.o libuconv.cc"
 
 puts compiler_cmd
+
+status = %x( #{compiler_cmd} )
+# status = `ar clq libuconv.a libuconv.o` unless status
+# status = `ranlib libuconv.a`
 
 File.delete 'uconv_tmp.cc'
 File.delete 'uconv_tmp.cxx'

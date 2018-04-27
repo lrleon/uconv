@@ -1,9 +1,15 @@
+#!/usr/bin/env ruby
+# -*- coding: iso-8859-1 -*-
 
+require 'fileutils'
+version = File.new('version.txt').read
+
+note = %Q<
 /*
    _   _  ___ ___  _ ____   __
-  | | | |/ __/ _ \| '_ \ \ / /  C++ Physical magnitudes and units conversion
-  | |_| | (_| (_) | | | \ V /   Version 1.0
-   \__,_|\___\___/|_| |_|\_/    https://github.com/lrleon/uconv
+  | | | |/ __/ _ \\| '_ \\ \\ / /  C++ Physical magnitudes and units conversion
+  | |_| | (_| (_) | | | \\ V /   Version #{version.chomp}
+   \\__,_|\\___\\___/|_| |_|\\_/    https://github.com/lrleon/uconv
 
   This file is part of uconv library
 
@@ -29,13 +35,9 @@
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-# ifndef DIMENSION_LESS_UNIT_H
-# define DIMENSION_LESS_UNIT_H
+>
 
-# include <uconv.H>
+file_name = ARGV.shift
+file = File.new(file_name).read
 
-Declare_Physical_Quantity(Dimension_Less, "DimensionLess", "Dmless", "TODO");
-
-Declare_Unit(Dim_Less, "dmless", "dmless", "TODO", Dimension_Less, 1e-7, 1e7);
-
-# endif
+puts note, file

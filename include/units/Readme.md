@@ -1,6 +1,6 @@
 # Unit definitions directory
 
-You can put in this directory all the units definitions that you
+You could put in this directory all the units definitions that you
 project needs. Then, edit the `include/uconv-list.H` and put there
 file inclusions to every unit that you have defined. Finally, go to
 the `lib` directory and compile the library.
