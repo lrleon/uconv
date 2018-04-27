@@ -13,7 +13,7 @@ fail 'Niels Lohmann json library environment variable has not been defined' unle
 options = {}
 options_parser = OptionParser.new do |opts|
 
-  opts.on('-U uconv-list-file', '--units-path uconv-list-file',
+  opts.on('-U uconv-list-file', '--units-path uconv-list-file-H ',
           'full path to uconv-list header') do |path|
     options[:units_file] = path
   end
@@ -26,6 +26,11 @@ options_parser = OptionParser.new do |opts|
   opts.on('-c compiler-name', '--compiler compiler-name',
           'compiler name') do |compiler|
     options[:compiler] = compiler
+  end
+
+  opts.on('-l library-name', '--library library-name',
+          'library name') do |libname|
+    options[:libname] = libname
   end
 end
 

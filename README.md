@@ -2,10 +2,11 @@
 
 ## Purpose
 	
-`uconv` is a C++ library that allows units definitions and conversions
-between different physical units through simple classes for defining
-and handling physical quantities, units measuring them and quantities
-related to the units with transparent conversions. 
+`uconv` is a C++ library that allows to define physical quantities
+along with units definitions and conversions between different units
+through simple classes for defining and handling physical quantities,
+units measuring them and quantities related to the units with
+transparent conversions. 
 
 ### Physical Quantities
 
@@ -30,17 +31,17 @@ A new unit is defined with the macro
                  "description", Physical_Quantity, 
                  min-value, max-value);
 				 
-This macro declares a class that defines a new unit related to
+This macro declares a class that defines a new unit related to the
 `Physical_Quantity` class which should be previously already
 declared. `min-value` and `max-value` are doubles defining the lower
 and upper bounds of the unit.
 
-As example, let us consider a `Fahrenheit` as class name that defines
+As example, let us consider `Fahrenheit` as class name that defines
 the known temperature unit:
 
     Declare_Unit(Fahrenheit, "degF", "\\degree{F}", 
-	     "Scale based on brine freezing (0) and boiling point (100)",
-	     Temperature, -459.67, 750);
+         "Scale based on brine freezing (0) and boiling point (100)",
+         Temperature, -459.67, 750);
 
 Since LaTeX math mode commands often start by backslash, you must
 escape each backslash belonging to LaTeX expression. This is the
@@ -57,7 +58,7 @@ Unit conversion is relatively very easy if you use the
 					   
 This macro declares a function signature to perform the conversion of
 a quantity expressed in `Source_Unit_Class_Name` towards
-`Target_Unit_Class_Name` whose parameter is a double and returns a
+`Target_Unit_Class_Name`, whose parameter is a double, and it returns a
 double corresponding to the converted value. Next of using of
 `Declare_Conversion`, it usually writes the function conversion body
 which implements the conversion. For example, for converting from
@@ -181,7 +182,7 @@ arbitrarily combine them.
 
 #### Mathematical operations
 
-`uconv` export some mathematical operations.  In all operations, the
+`uconv` export some mathematical operations. In all operations, the
 unit limits are checked. 
 
 The main binary mathematical operators `+`, `-`, `*` and `/` are
@@ -217,35 +218,76 @@ generate all the needed bookkeeping.
 
 There are two ways for integrating `uconv` to your project. The first
 one is by adding your units directly to the library distribution and
-building it. The second way, which is the recommended, is by building
-your own library.
+then building the `libuconv.a` file. This way implies that you should
+edit the `uconv-list.H` file and put file inclusions to your unit
+definitions. The second way, which is the recommended, is to create
+and manage your own `uconv-list.H` (or another name that you want) and 
+building your own `libuconv.a` file (or another name that you want).
 
-#### Adding units to `uconv` distribution
+Let us suppose that your unit definitions are in `uconv-list.H`
+file. First, this file must include the header `uconv.H` followed by
+file inclusions to your units definitions. Some such that:
 
-In order to use `uconv`, you require:
+	# include <uconv.H>
+	# include "units/temperature-unit.H"
+	# include "units/pressure-unit.H"
+	# include "units/density-unit.H"
+	// so on ...
+	
+From the second line, each line is a file inclusion to a header
+containing a physical quantity along with its units. 
 
-1. Include the header `uconv.H` in the places of your project using
-   units and conversions.
+You must put an inclusion for `uconv-list.H` in every place of your
+project requiring to manage units. Note that you can rename
+`uconv-list.H`, but you should not remove the inclusion to `uconv.H`.
 
-2. Define your physical magnitudes along with their units (or reuse
-   them). In order to do that, we advice to create a file for each
-   physical magnitude, define it along its units and put there the
-   required conversion functions.
-   
-3. Edit the `uconv-list.H` header file and put there header inclusions
-   for everyone of your units. Here, you
-   
-4. Generate the `uconvlib.a` and link it to your project.
+Your project must be able to locate the headers `uconv.H` and
+`uconv-list.H` and to link `libuconv.a` file to the every executable.
+
+#### Building the `libuconv.a` library inside the `uconv` distribution
+
+In this case, the recommended way is to place the units definitions
+headers in the `include/units` sub directory. Once you have already
+defined all your units, go to the `lib` directory and perform:
+
+	make depend
+	make all
+
+If everything was okay, you will have `libuconv.a` file in the directory.
 
 #### Building your own `libuconv.a` library
 
+If you have several projects managing units, then you probably will
+want to manage several and independent unit systems. In this case, you
+will not probably want to build `libuconv.a` inside `uconv`
+distribution because this library will contain all the units through
+all your projects with the consequent waste of space and time. 
+
+In order to manage this, you can use the script `buildunits` contained
+in the `bin` directory. Its command line syntax is as follows:
+
+    buildunits -U uconv-list-file -H path-to-uconv-header
+	
+Let us suppose that you have defined your unit in `my-units.H`
+file. Then, you perform:
+
+    buildunits -U my-units.H -H myproject/include
+	
+This command will build `libuconv.a` in the directory where
+`buildunits` was called.
+
+If you need a different name for your library, then you could rename
+it or use the flag `-l library-name`. Referring the previous example,
+you could perform:
+
+	buildunits -U my-units.H -H myproject/include -l my-units.a
 
 #### Usage in your project
 
 `uconv` internally uses several tables for storing physical quantities
 names, units and conversions. For this reason, it is imperative to
 explicitly initialize the library. The most recommended way for doing
-that with `UnitsInstancer` class, which is a singleton and that must
+that is with `UnitsInstancer` class, which is a singleton and that must
 be called before any use of `uconv`. As general rule, we recommend to
 instantiate just next the `uconv-list.H` header inclusion. Some such
 this:
@@ -253,34 +295,54 @@ this:
 	# include <uconv-list.H>
 	UnitsInstancer init; // or any other name that you want
 	// here you could put other header inclusions
+	
+Be careful with a double instantiation that could cause a linking
+conflict. You could avoid that by using a macro guard:
 
-### Requirements
+    # ifndef UNITS_INSTANTIATED
+    # define UNITS_INSTANTIATED 1
+    UnitsInstancer init;
+    # endif
 
-You will need Aleph-w library, which can be downloaded from
+### Building Requirements
+
+You will need `Aleph-w` library, which can be downloaded from
 <https://github.com/lrleon/Aleph-w> and the Niels Lohmann (nlohmann) json
 library, which can be downloaded from <https://github.com/nlohmann/json>.
 
-In order to build
+In order to build the library, you will need to have installed `Ruby`,
+given that the scripts are written in this language.
 
 `uconv` has only been tested on Linux systems, but it is supposed to
-run without problems on other systems where Aleph-w library is
+run without problems on other systems where `Aleph-w` library is
 installed. 
 
-### Building the library
+### Running Tests
 
-First, set the `ALEPHW` and `NLOHMANNJSON` environment variables to
-point to the directories where `Aleph-w` and Niels Lohmann json
-libraries are. Next, on the distribution directory, perform:
+Unit test cases are located it `Tests` directory. For performing
+them, you will need `googletest`
+<https://github.com/google/googletest>.
 
-    xmkmf
-	make Makefiles
-	make depend
+For executing all the tests:
+
+    ./all-test
 	
-Finally, go to `lib` directory and perform 
+For executing a specific test:
 
-	make 
+	./run-test -f test-file
 	
-This should build the file `uconlib.a` which contains the `uconv` library.
+Demo tests are located in `tests` directory. Inside `tests` directory
+execute
+
+	make all
+
+You will have the following executables:
+
+1. `convert`: simple unit converter.
+
+2. `vector-convert`: vector unit converter.
+
+3. `test-all-units`: a unit bounds tester given a physical quantity.
 
 ## License
 
