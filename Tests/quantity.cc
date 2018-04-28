@@ -59,8 +59,7 @@ TEST(Basic, Physical_static)
   EXPECT_EQ(PhysicalQuantity::search("Temperature"),
 	    &Temperature::get_instance());
 
-  EXPECT_TRUE(eq(PhysicalQuantity::names(),
-		 build_dynlist<string>("Angle", "Area", "Current", "Density",
-				       "DummyUnit", "Frequency",  "Pressure",
-				       "Temperature", "Time")));
+  EXPECT_TRUE(eq(PhysicalQuantity::names(), build_dynlist<string>
+		 ("Angle", "Area", "Current", "Density", "DummyUnit",
+		  "Frequency",  "Pressure", "Temperature", "Time")));
 }
