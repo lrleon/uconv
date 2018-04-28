@@ -58,17 +58,17 @@ Unit conversion is relatively very easy if you use the
 					   
 This macro declares a function signature to perform the conversion of
 a quantity expressed in `Source_Unit_Class_Name` towards
-`Target_Unit_Class_Name`, whose parameter is a double, and it returns a
-double corresponding to the converted value. Next of using of
-`Declare_Conversion`, it usually writes the function conversion body
-which implements the conversion. For example, for converting from
-`Fahrenheit` to `Celsius` you might write is thus:
+`Target_Unit_Class_Name`, whose parameter is a double, and it returns
+a double corresponding to the converted value. Next of using of
+`Declare_Conversion`, the function conversion body which implements
+the conversion must be written. For example, for converting from
+`Fahrenheit` to `Celsius` you might write this thus:
 
     Declare_Conversion(Fahrenheit, Celsius, t) { return (t - 32) / 1.8; }
 
 `Fahrenheit` and `Celsius` class names must already be defined. The
-parameter `t` is a double and in the function body (between `{}`) is
-written the conversion.
+parameter `t` is a double in `Fahrenheit` and in the function body
+(between `{}`) is written the conversion.
 
 ### Defining and Using Quantities
 
