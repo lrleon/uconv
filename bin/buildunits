@@ -19,7 +19,7 @@ options_parser = OptionParser.new do |opts|
   end
 
   opts.on('-H path-to-uconv-header', '--path-uconv path-to-uconv-header',
-          'full path to uconv-list header') do |path|
+          'full path to uconv.H file') do |path|
     options[:uconv_path] = path
   end
 
@@ -38,7 +38,8 @@ options_parser.parse!
 
 units_file = options[:units_file]
 uconv_path = options[:uconv_path]
-compiler = options[:compiler] ? options[:compiler] : 'c++' 
+compiler = options[:compiler] ? options[:compiler] : 'c++'
+libname = options[:libname] ? options[:libname] : 'libuconv.a'
 
 fail 'uconv-list-file has not been specified' unless units_file
 fail "#{units_file}  does not exist" unless File.exists?(units_file)
@@ -193,7 +194,7 @@ file = ucontent
 
 write_to_file 'uconv_tmp.cc', ucontent
 
-includes = "-I#{uconv_path} -I#{alephw} -I#{json}/include"
+includes = "-I. -I#{uconv_path} -I#{alephw} -I#{json}/include"
 flags = "-Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings "\
         "-Wno-parentheses -O2 -DNDEBUG -std=c++14"
 
@@ -219,10 +220,12 @@ compiler_cmd = "#{compiler} #{includes} #{flags} -c -o libuconv.o libuconv.cc"
 puts compiler_cmd
 
 status = %x( #{compiler_cmd} )
-# status = `ar clq libuconv.a libuconv.o` unless status
-# status = `ranlib libuconv.a`
+status = %x(ar clq #{libname} libuconv.o) if status
+status = %x(ranlib #{libname}) if status
 
 File.delete 'uconv_tmp.cc'
 File.delete 'uconv_tmp.cxx'
+File.delete 'libuconv.o'
+File.delete 'libuconv.cc'
 
 
