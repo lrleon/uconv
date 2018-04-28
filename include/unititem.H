@@ -23,6 +23,9 @@
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
+/*
+  Basic bookkeeping for uconv unit library
+ */
 # ifndef DESC_TABLE_H
 # define DESC_TABLE_H
 
@@ -33,6 +36,10 @@
 # include <ah-string-utils.H>
 # include <tpl_dynMapTree.H>
 
+/** This is a basic descriptor used for physical quantities and units.
+
+   @author Leandro Rabindranath Leon
+ */
 struct UnitItem
 {
   friend class PhysicalQuantity;
@@ -90,6 +97,10 @@ public:
   }
 };
 
+/** Basic table storing physical quantities and unit descriptors.
+
+    @author Leandro Rabindranath Leon
+ */
 class UnitItemTable
 {
   DynMapTree<std::string, const UnitItem *> name_tbl; // index by unit
@@ -97,18 +108,29 @@ class UnitItemTable
 
 public:
 
+  /// Return all the stored descriptors.
   DynList<const UnitItem *> items() const
   {
     return name_tbl.values();
   }
 
+  /// Return all the stored descriptor names.
   DynList<string> names() const { return name_tbl.keys(); }
 
   DynList<string> symbols() const { return symbol_tbl.keys(); }
 
-  // returns a iterator to pair<string, UnitItem*>
+  /// Return an iterator to a list of pair<string, const UnitItem*>
+  /// items. First item is the descriptor name and the second one is a
+  /// pointer to the descriptor.
   auto get_it() { return name_tbl.get_it(); }
 
+  /** Register a new descriptor.
+
+      @param[in] ptr pointer to the descriptor. It must correctly allocated.
+      @throw bad_alloc if there is no enough memory.
+      @throw domain_error if it already exists a descriptor with the
+      same name or the same symbol.
+   */
   void register_item(const UnitItem * ptr)
   {
     if (name_tbl.contains(ptr->name))
@@ -129,30 +151,40 @@ public:
     symbol_tbl.insert(ptr->symbol, ptr);
   }
 
+  /// Return true if the table contains a descriptor with name `name`.
   bool exists_name(const string & name) const noexcept
   {
     return name_tbl.contains(name);
   }
 
+  /// Return true if the table contains a descriptor with symbol `symbol`.
   bool exists_symbol(const string & symbol) const noexcept
   {
     return symbol_tbl.contains(symbol);
   }
 
+  /// Return a pointer to the descriptor containing the name `name` if
+  /// this exists; otherwise, it returns `nullptr`
   const UnitItem * search_by_name(const string & name) const noexcept
   {
     auto p = name_tbl.search(name);
     return p ? p->second : nullptr;
   }
 
+  /// Return a pointer to the descriptor containing the symbol `symbol` if
+  /// this exists; otherwise, it returns `nullptr`
   const UnitItem * search_by_symbol(const string & symbol) const noexcept
   {
     auto p = symbol_tbl.search(symbol);
     return p ? p->second : nullptr;
   }
 
+  /// Return the number of descriptors stored.
   size_t size() const noexcept { return name_tbl.size(); }
 
+  /// Throw `domain_error` exception if the descriptor pointed by
+  /// `ptr` already contains the string `str` as name or symbol. It is
+  /// a helper validation function.
   void validate(const UnitItem * ptr, const string & str)
   {
     {

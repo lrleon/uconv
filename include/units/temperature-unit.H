@@ -28,7 +28,7 @@
 
 # include "uconv.H"
 
-Declare_Physical_Quantity(Temperature, "T","T",
+Declare_Physical_Quantity(Temperature, "T", "T",
 			  "Average thermal energy of the particles in a substance");
 
 Declare_Unit(Kelvin, "degK","K",
