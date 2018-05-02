@@ -1240,6 +1240,8 @@ inline double cbrtl(const BaseQuantity & q)
 template <class UnitName>
 class Quantity : public BaseQuantity
 {
+  friend class Unit;
+
   // assign to value the value contained in q converted to UnitName
   // and validates that both units refer to the same physical quantity
   // and the converted value is inside the valid range
@@ -1252,6 +1254,10 @@ class Quantity : public BaseQuantity
   }
 
   void assign_converted(const Quantity<UnitName> &) {}
+
+  /// Especial constructor not generating exception. Do not use it!
+  Quantity(NoExceptionCtor, double val)
+    : BaseQuantity(UnitName::get_instance(), val) {}
 
 public:
 
@@ -1739,6 +1745,8 @@ bool operator != (double lhs, const Quantity<U> & rhs)
  */
 class VtlQuantity : public BaseQuantity
 {
+  friend class Unit;
+
 public:
   
   /// return the compund unit corresponding to uname1 x uname2
@@ -1794,6 +1802,9 @@ private:
     s << "Nonexistent unit name or symbol " << str;
     ALEPHTHROW(UnitNotFound, s.str());
   }
+
+  VtlQuantity(NoExceptionCtor, const Unit & unit, double val)
+    : BaseQuantity(unit, val) {}
 
 public:
 
@@ -2192,7 +2203,7 @@ inline VtlQuantity operator / (const VtlQuantity & lhs, double rhs)
  */
 inline VtlQuantity Unit::max() const noexcept
 {
-  return VtlQuantity(*this, max_val);
+  return VtlQuantity(no_exception_ctor, *this, max_val);
 }
 
 /** Return the minimum allowed value for the unit
@@ -2202,7 +2213,7 @@ inline VtlQuantity Unit::max() const noexcept
  */
 inline VtlQuantity Unit::min() const noexcept
 {
-  return VtlQuantity(*this, min_val);
+  return VtlQuantity(no_exception_ctor, *this, min_val);
 }
 
 /** Increase the value to the immediately superior according to the

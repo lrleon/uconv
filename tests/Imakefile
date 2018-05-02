@@ -24,7 +24,7 @@ TESTOBJS = $(TESTSRCS:.cc=.o)
 
 SRCS = $(TESTSRCS)
 
-AllTarget(conversion)
+AllTarget(convert)
 NormalProgramTarget(convert,convert.o,$(DEPLIBS),$(LOCAL_LIBRARIES),$(SYS_LIBRARIES))
 
 AllTarget(vector-convert)
