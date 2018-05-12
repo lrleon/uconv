@@ -5,7 +5,7 @@
 `uconv` is a C++ library that allows to define physical quantities
 along with units definitions and conversions between different units
 through simple classes for defining and handling physical quantities,
-units measuring them and quantities related to the units with
+units measuring them, and quantities related to the units with
 transparent conversions. 
 
 ### Physical Quantities
@@ -37,7 +37,7 @@ declared. `min-value` and `max-value` are doubles defining the lower
 and upper bounds of the unit.
 
 As example, let us consider `Fahrenheit` as class name that defines
-the known temperature unit:
+the well known temperature unit:
 
     Declare_Unit(Fahrenheit, "degF", "\\degree{F}", 
          "Scale based on brine freezing (0) and boiling point (100)",
@@ -60,8 +60,8 @@ This macro declares a function signature to perform the conversion of
 a quantity expressed in `Source_Unit_Class_Name` towards
 `Target_Unit_Class_Name`, whose parameter is a double, and it returns
 a double corresponding to the converted value. Next of using of
-`Declare_Conversion`, the function conversion body which implements
-the conversion must be written. For example, for converting from
+`Declare_Conversion`, the function conversion body, which implements
+the conversion, must be written. For example, for converting from
 `Fahrenheit` to `Celsius` you might write this thus:
 
     Declare_Conversion(Fahrenheit, Celsius, t) { return (t - 32) / 1.8; }
@@ -84,8 +84,8 @@ with its own class:
 
 `Quantity<Unit_Class_Name>` is designed for dealing units and its
 conversions in compiling time, without need of lookups in run time. In
-addition, the template fashion directly indicates the unit that is
-been used.
+addition, the template parameter directly indicates the unit that is
+being used.
 
 As example, let us consider the following function:
 
@@ -136,7 +136,7 @@ macro in this way:
     Declare_Compound_Unit(Meter_h, "Mt/s", "meters per second",
 	                      Speed, 0, 299792458, Meter, Second);
 						  
-Compound units could be very useful to validate. However, they require
+Compound units could be very useful for validations. However, they require
 to define many more conversions and especially to know the unit
 bounds, which increases the complexity. For this reason, it could be
 preferable to directly define speed units without indicating that they
@@ -148,7 +148,7 @@ When a conversion is required but this one has not been defined, a
 compiler error will be generated.
 
 `Quantity` object always require to know their unit. Consequently, it
-is not possible to instantiate a empty `Quantity`, without a value,
+is not possible to instantiate a empty `Quantity`, without a unit,
 because if not the boundary check could not be performed.
 
 #### `VltQuantity` class
@@ -189,9 +189,10 @@ The main binary mathematical operators `+`, `-`, `*` and `/` are
 exported. Each binary operation can receive, `Quantity`, `VtlQuantity`
 or double objects. If a double is received, then it is assumed that
 its unit is the same than the another operand.  `+` and `-` operators
-require that both operands are in the same unit. In the case of `*`
-and `/` operands, the compound unit corresponding to the result is
-required.
+require that both operands are in the same physical quantity yet
+conversion is transparently done if the units are different (but
+belonging to the same physical quantity).  In the case of `*` and `/`
+operands, the compound unit corresponding to the result is required.
 
 Other wrappers to C mathematical functions are provided: `pow()`,
 `exp()`, `log10()`, `sqrt()`, etc. All this functions return a double.
@@ -255,6 +256,13 @@ defined all your units, go to the `lib` directory and perform:
 
 If everything was okay, you will have `libuconv.a` file in the directory.
 
+The provided `Imakefile` file is configured for using `clang` compiler
+and its sanitizer. Also, by default the library is compiled without
+optimization. Therefore, if you really adopt this approach to
+integrate your units to your project, we advice you to edit the
+`Imakefile`, suppress the sanitizer flags, and to set `-O2` compiler
+flag.
+
 #### Building your own `libuconv.a` library
 
 If you have several projects managing units, then you probably will
@@ -307,11 +315,19 @@ conflict. You could avoid that by using a macro guard:
 ### Building Requirements
 
 You will need `Aleph-w` library, which can be downloaded from
-<https://github.com/lrleon/Aleph-w> and the Niels Lohmann (nlohmann) json
+<https://github.com/lrleon/Aleph-w> and the Niels Lohmann (nlohmann) jsbon
 library, which can be downloaded from <https://github.com/nlohmann/json>.
 
 In order to build the library, you will need to have installed `Ruby`,
 given that the scripts are written in this language.
+
+Tests and demos expect to find the `clang` compiler and they use its
+sanitizer. You can remove this dependence by editing the
+`Imakefiles`. On each `Imakefile` do:
+
+1. Comment the definitions of `CXX`, `CLINK`, `AR` and `RANLIB`.
+
+2. Erase the compiler flag `-fsanitize=address,undefined`.
 
 `uconv` has only been tested on Linux systems, but it is supposed to
 run without problems on other systems where `Aleph-w` library is
@@ -344,13 +360,12 @@ You will have the following executables:
 
 3. `test-all-units`: a unit bounds tester given a physical quantity.
 
+
 ## License
 
-Since `uconv` depends on components that are licensed GNU GPL v3,
+Since `uconv` depends on components that are licensed under GNU GPL v3,
 `uconv` is also licensed on the GNU GPL v3.
 
 See
 [LICENSE](https://github.com/lrleon/uconv/blob/master/LICENSE). COPYRIGHT
-(c) 2018, Ixhel Mejias, Alberto Valderrama, Fernando Montilla, Eduardo
-Valderrama, Neylith Quintero, Felix Buccellato, Virginia Buccellato
-and Leandro Rabindranath Leon
+(c) 2018, Leandro Rabindranath Leon, Ixhel Mejias and Alberto Valderrama 

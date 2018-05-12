@@ -11,7 +11,10 @@ INCLUDES = -I$(TOP)/include -I$(ALEPHW) -I$(JSON)
 WARN= -Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings -Wno-parentheses
 
 # By default this lib is compiled with clang sanitizer options
+# Comment the following line and uncoment the next one if you want
+# full performamce 
 FLAGS = -std=c++14 $(WARN) -O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer
+#FLAGS = -std=c++14 $(WARN) -O2
 
 OPTIONS = $(FLAGS)
 CXXFLAGS= -std=c++14 $(INCLUDES) $(OPTIONS)
