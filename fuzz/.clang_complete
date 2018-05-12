@@ -1,0 +1,6 @@
+-I/home/lrleon/Aleph-w
+-I/home/lrleon/uconv/include
+-std=c++14
+-Wall
+-Wextra
+-DDEBUG

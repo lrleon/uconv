@@ -226,7 +226,7 @@ test_random_conversions(const PhysicalQuantity & pq, bool verbose,
 	 << endl;
 
       // generate the rows
-  auto rows = samples.maps<DynList<string>>([&units, epsilon, verbose] (Puv p)
+  auto rows = samples.maps<DynList<string>>([epsilon, verbose] (Puv p)
     {
       DynList<string> conversions;
       const DynList<double> & samples = p.second;
