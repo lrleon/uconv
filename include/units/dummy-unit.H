@@ -22,56 +22,14 @@
 
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
-*/
-# ifndef MULTIUNITMAP_H
-# define MULTIUNITMAP_H
+*/# ifndef DUMMY_UNIT_H
+# define DUMMY_UNIT_H
 
-# include <tuple>
-# include <initializer_list>
-# include <ahSort.H>
-# include <ahFunctional.H>
-# include <tpl_dynMapTree.H>
+# include "uconv.H"
 
-using namespace std;
+Declare_Physical_Quantity(DummyUnit, "Dummy", "Dummy", "Only for testing");
 
-class Unit;
+Declare_Unit(TestUnit, "TU", "TU", "Only for testing", DummyUnit,
+	     numeric_limits<double>::min(), numeric_limits<double>::max());
 
-class CompoundUnitTbl
-{
-  struct Cmp
-  {
-    bool operator () (const DynList<string> & l1,
-		      const DynList<string> & l2) const noexcept
-    {
-      return lesser(sort(l1), sort(l2));
-    }
-  };
-
-  DynMapTree<DynList<string>, const Unit *, Avl_Tree, Cmp> tbl;
-
-public:
-
-  const Unit * search(const DynList<string> & names)
-  {
-    auto p = tbl.search(names);
-    return p == nullptr ? nullptr : p->second;
-  }
-
-  bool insert(const DynList<string> & l, const Unit & unit)
-  {
-    return tbl.insert(l, &unit) != nullptr;
-  }
-
-  DynList<pair<DynList<string>, string>> items()
-  {
-    using T = pair<DynList<string>, string>;
-
-    return tbl.items_ptr().maps<T>([] (pair<DynList<string>, const Unit*> * p)
-      {
-	return make_pair(p->first, p->second->name);
-      });
-  }
-};
-
-
-# endif // MULTIUNITMAP_H
+# endif

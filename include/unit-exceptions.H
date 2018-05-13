@@ -1,28 +1,52 @@
-#ifndef UNIT_EXCEPTIONS_H
+/*
+   _   _  ___ ___  _ ____   __
+  | | | |/ __/ _ \| '_ \ \ / /  C++ Physical magnitudes and units conversion
+  | |_| | (_| (_) | | | \ V /   Version 1.0
+   \__,_|\___\___/|_| |_|\_/    https://github.com/lrleon/uconv
+
+  This file is part of uconv library
+
+  Copyright (c) 2018     Ixhel Mejias
+                         Alberto Valderrama
+                         Leandro Rabindranath Leon
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+*/#ifndef UNIT_EXCEPTIONS_H
 #define UNIT_EXCEPTIONS_H
 
-# include <zen-exceptions.H>
+# include <aleph-exceptions.H>
 
-DEFINE_ZEN_EXCEPTION(InvalidPhysicalQuantity, "Invalid physical quantity")
+DEFINE_ALEPH_EXCEPTION(InvalidPhysicalQuantity, "Invalid physical quantity")
 
-DEFINE_ZEN_EXCEPTION(WrongSiblingUnit,
+DEFINE_ALEPH_EXCEPTION(WrongSiblingUnit,
 		     "Sibling unit is not physically related");
 
-DEFINE_ZEN_EXCEPTION(WrongUnitRatio, "wrong unit ratio");
+DEFINE_ALEPH_EXCEPTION(WrongUnitRatio, "wrong unit ratio");
 
-DEFINE_ZEN_EXCEPTION(UnitConversionNotFound, "Unit conversion not found");
+DEFINE_ALEPH_EXCEPTION(UnitConversionNotFound, "Unit conversion not found");
 
-DEFINE_ZEN_EXCEPTION(DuplicatedUnitConversion, "duplicated unit conversion")
+DEFINE_ALEPH_EXCEPTION(DuplicatedUnitConversion, "duplicated unit conversion")
 
-DEFINE_ZEN_EXCEPTION(OutOfUnitRange, "Value is out of unit range");
+DEFINE_ALEPH_EXCEPTION(OutOfUnitRange, "Value is out of unit range");
 
-DEFINE_ZEN_EXCEPTION(DifferentUnits,
+DEFINE_ALEPH_EXCEPTION(DifferentUnits,
 		     "Binary Operation between involves different units");
 
-DEFINE_ZEN_EXCEPTION(UnitNotFound, "unit not found");
+DEFINE_ALEPH_EXCEPTION(UnitNotFound, "unit not found");
 
-DEFINE_ZEN_EXCEPTION(CompoundUnitNotFound, "compound unit not found");
+DEFINE_ALEPH_EXCEPTION(CompoundUnitNotFound, "compound unit not found");
 
-DEFINE_ZEN_EXCEPTION(UnitException, "unit exception");
+DEFINE_ALEPH_EXCEPTION(UnitException, "unit exception");
 
 #endif

@@ -22,56 +22,22 @@
 
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
-*/
-# ifndef MULTIUNITMAP_H
-# define MULTIUNITMAP_H
+*/# ifndef VELOCITY_UNIT_H
+# define VELOCITY_UNIT_H
 
-# include <tuple>
-# include <initializer_list>
-# include <ahSort.H>
-# include <ahFunctional.H>
-# include <tpl_dynMapTree.H>
+# include "uconv.H"
 
-using namespace std;
+Declare_Physical_Quantity(Velocity, "V", "V", "Rate of change of position");
 
-class Unit;
+Declare_Unit(Ft_S, "ft/s", "ft/s", "feet for second", Velocity, 0, 1e6);
 
-class CompoundUnitTbl
-{
-  struct Cmp
-  {
-    bool operator () (const DynList<string> & l1,
-		      const DynList<string> & l2) const noexcept
-    {
-      return lesser(sort(l1), sort(l2));
-    }
-  };
+Declare_Unit(Meter_S, "m/s", "m/s", "meter for second", Velocity, 0, 304800);
 
-  DynMapTree<DynList<string>, const Unit *, Avl_Tree, Cmp> tbl;
+// To Ft_S
+Declare_Conversion(Meter_S, Ft_S, V) { return 3.28083989501312 * V; }
 
-public:
-
-  const Unit * search(const DynList<string> & names)
-  {
-    auto p = tbl.search(names);
-    return p == nullptr ? nullptr : p->second;
-  }
-
-  bool insert(const DynList<string> & l, const Unit & unit)
-  {
-    return tbl.insert(l, &unit) != nullptr;
-  }
-
-  DynList<pair<DynList<string>, string>> items()
-  {
-    using T = pair<DynList<string>, string>;
-
-    return tbl.items_ptr().maps<T>([] (pair<DynList<string>, const Unit*> * p)
-      {
-	return make_pair(p->first, p->second->name);
-      });
-  }
-};
+// To Meter_S
+Declare_Conversion(Ft_S, Meter_S, V) { return 0.3048 * V; }
 
 
-# endif // MULTIUNITMAP_H
+# endif

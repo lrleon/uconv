@@ -22,56 +22,28 @@
 
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
-*/
-# ifndef MULTIUNITMAP_H
-# define MULTIUNITMAP_H
+*/#ifndef FREQUENCY_UNIT_H
+#define FREQUENCY_UNIT_H
 
-# include <tuple>
-# include <initializer_list>
-# include <ahSort.H>
-# include <ahFunctional.H>
-# include <tpl_dynMapTree.H>
+# include "uconv.H"
 
-using namespace std;
+Declare_Physical_Quantity(Frequency, "f", "\\nu",
+			  "Number of occurrences of a repeating event "
+			  " per unit time");
 
-class Unit;
+Declare_Unit(Hertz, "Hz", "Hz",
+	     "Unit of frequency in the International System of Units (SI) "
+	     "and is defined as one cycle per second", Frequency, 0, 120);
 
-class CompoundUnitTbl
-{
-  struct Cmp
-  {
-    bool operator () (const DynList<string> & l1,
-		      const DynList<string> & l2) const noexcept
-    {
-      return lesser(sort(l1), sort(l2));
-    }
-  };
+Declare_Unit(Revolution_per_minute, "RPM", "RPM",
+	     "Unit of frequency and is defined as revolution (cycle) per minute",
+	     Frequency, 0, 7200);
 
-  DynMapTree<DynList<string>, const Unit *, Avl_Tree, Cmp> tbl;
+// To Revolution_per_minute
+Declare_Conversion(Hertz, Revolution_per_minute, V) { return 60 * V; }
 
-public:
-
-  const Unit * search(const DynList<string> & names)
-  {
-    auto p = tbl.search(names);
-    return p == nullptr ? nullptr : p->second;
-  }
-
-  bool insert(const DynList<string> & l, const Unit & unit)
-  {
-    return tbl.insert(l, &unit) != nullptr;
-  }
-
-  DynList<pair<DynList<string>, string>> items()
-  {
-    using T = pair<DynList<string>, string>;
-
-    return tbl.items_ptr().maps<T>([] (pair<DynList<string>, const Unit*> * p)
-      {
-	return make_pair(p->first, p->second->name);
-      });
-  }
-};
+// To Hertz
+Declare_Conversion(Revolution_per_minute, Hertz, V) { return 1.66666666666666667e-2 * V; }
 
 
-# endif // MULTIUNITMAP_H
+#endif

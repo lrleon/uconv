@@ -22,56 +22,20 @@
 
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
-*/
-# ifndef MULTIUNITMAP_H
-# define MULTIUNITMAP_H
+*/# ifndef AREA_UNIT_H
+# define AREA_UNIT_H
 
-# include <tuple>
-# include <initializer_list>
-# include <ahSort.H>
-# include <ahFunctional.H>
-# include <tpl_dynMapTree.H>
+# include <uconv.H>
 
-using namespace std;
+Declare_Physical_Quantity(Area, "A", "A",
+			  "extent of a two-dimensional figure or shape")
 
-class Unit;
+Declare_Unit(Feet2, "ft2", "ft2", "feet square", Area, 0, 1e7);
 
-class CompoundUnitTbl
-{
-  struct Cmp
-  {
-    bool operator () (const DynList<string> & l1,
-		      const DynList<string> & l2) const noexcept
-    {
-      return lesser(sort(l1), sort(l2));
-    }
-  };
+Declare_Unit(Inch2, "in2", "in2", "inch square", Area, 0, 12*1e7);
 
-  DynMapTree<DynList<string>, const Unit *, Avl_Tree, Cmp> tbl;
-
-public:
-
-  const Unit * search(const DynList<string> & names)
-  {
-    auto p = tbl.search(names);
-    return p == nullptr ? nullptr : p->second;
-  }
-
-  bool insert(const DynList<string> & l, const Unit & unit)
-  {
-    return tbl.insert(l, &unit) != nullptr;
-  }
-
-  DynList<pair<DynList<string>, string>> items()
-  {
-    using T = pair<DynList<string>, string>;
-
-    return tbl.items_ptr().maps<T>([] (pair<DynList<string>, const Unit*> * p)
-      {
-	return make_pair(p->first, p->second->name);
-      });
-  }
-};
+Declare_Conversion(Feet2, Inch2, a) { return a/12; }
+Declare_Conversion(Inch2, Feet2, a) { return 12*a; }
 
 
-# endif // MULTIUNITMAP_H
+# endif

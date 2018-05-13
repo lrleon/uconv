@@ -22,56 +22,25 @@
 
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
-*/
-# ifndef MULTIUNITMAP_H
-# define MULTIUNITMAP_H
+*/#ifndef POWER_UNIT_H
+#define POWER_UNIT_H
 
-# include <tuple>
-# include <initializer_list>
-# include <ahSort.H>
-# include <ahFunctional.H>
-# include <tpl_dynMapTree.H>
+# include "uconv.H"
 
-using namespace std;
+Declare_Physical_Quantity(Power, "P", "P",
+			  "power is the rate of doing work. It is the amount of "
+			  "energy consumed per unit time");
 
-class Unit;
+Declare_Unit(HorsePower, "hp", "hp",
+	     "Unit of measurement of power hp", Power, 0, 2000);
 
-class CompoundUnitTbl
-{
-  struct Cmp
-  {
-    bool operator () (const DynList<string> & l1,
-		      const DynList<string> & l2) const noexcept
-    {
-      return lesser(sort(l1), sort(l2));
-    }
-  };
+Declare_Unit(Watt, "W", "W", "Unit of measurement of power watt", Power, 0,
+	     1491399.74316);
 
-  DynMapTree<DynList<string>, const Unit *, Avl_Tree, Cmp> tbl;
+// To HorsePower
+Declare_Conversion(Watt, HorsePower, V) { return 1.3410220896e-3 * V; }
 
-public:
+// To watt
+Declare_Conversion(HorsePower, Watt, V) { return 745.699871582 * V; }
 
-  const Unit * search(const DynList<string> & names)
-  {
-    auto p = tbl.search(names);
-    return p == nullptr ? nullptr : p->second;
-  }
-
-  bool insert(const DynList<string> & l, const Unit & unit)
-  {
-    return tbl.insert(l, &unit) != nullptr;
-  }
-
-  DynList<pair<DynList<string>, string>> items()
-  {
-    using T = pair<DynList<string>, string>;
-
-    return tbl.items_ptr().maps<T>([] (pair<DynList<string>, const Unit*> * p)
-      {
-	return make_pair(p->first, p->second->name);
-      });
-  }
-};
-
-
-# endif // MULTIUNITMAP_H
+#endif
