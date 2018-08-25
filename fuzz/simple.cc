@@ -1,8 +1,7 @@
 
 # include <uconv-list.H>
 
-extern "C" void LLVMFuzzerTestOneInput(const double val)
+extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 {
-  Quantity<Fahrenheit> f(val);
-  Quantity<Celsius> c = f;
+  cout << Size << " " << endl;
 }

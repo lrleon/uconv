@@ -26,7 +26,7 @@
 /*
     Units definitions and their conversion library.
 
-    Aleph-w Leandro Rabindranath Leon    
+    Aleph-w Leandro Rabindranath Leon
  */
 
 # ifndef UCONV_H
@@ -171,29 +171,29 @@ public:
 
     @param[in] name of the new physical quantity
     @param[in] symbol string used as unit symbol
-    @param[in] desc description 
+    @param[in] desc description
 
     @author Leandro Rabindranath Leon
     @ingroup Units
 */
 # define Declare_Physical_Quantity(__name, symbol, lsymbol, desc)	\
-  struct __name : public PhysicalQuantity				\
-  {									\
-									\
-    static const __name & get_instance()				\
-    {									\
-      static __name instance;						\
-      return instance;							\
-    }									\
-									\
-  private:								\
-									\
+  struct __name : public PhysicalQuantity                         \
+  {                                                               \
+                                                                  \
+    static const __name & get_instance()                          \
+    {                                                             \
+      static __name instance;                                     \
+      return instance;                                            \
+    }                                                             \
+                                                                  \
+  private:                                                        \
+                                                                    \
     __name() : PhysicalQuantity(#__name, symbol, lsymbol, desc) {}	\
-									\
-  public:								\
-									\
-    __name(const __name&) = delete;					\
-    void operator = (const __name&) = delete;				\
+                                                                    \
+  public:                                                           \
+                                                                    \
+    __name(const __name&) = delete;                                 \
+    void operator = (const __name&) = delete;                       \
   };
 
 class VtlQuantity; // forward declaration
@@ -901,14 +901,14 @@ class BaseQuantity
 public:
 
   const Unit & unit; /// the unit; always visible from any quantity
-  
+
 protected:
 
   double value;
 
   BaseQuantity(const Unit & __unit) noexcept
     : unit(__unit), value(unit.default_value()) {}
-  
+
   BaseQuantity(const Unit & __unit, double val) noexcept
     : unit(__unit), value(val) {}
 
@@ -939,10 +939,10 @@ public:
   }
 
 protected:
-  
+
   /// helper for validating that value is in [min_val, max_val]. It
   /// throws range_error if value is not in the interval
-  void check_value()
+  void check_value() const
   {
     if (is_valid(value, unit))
       return;
@@ -1029,19 +1029,19 @@ public:
   }
 };
 
-/** Force val to be inside the unit limits 
+/** Force val to be inside the unit limits
 
     @author Leandro Rabindranath Leon
-    @ingroup Units 
- */ 
-inline double bind_to_unit_limits(double val, const Unit & unit) 
-{ 
-  if (val < unit.min_val) 
-    val = unit.min_val; 
-  else if (val > unit.max_val) 
-    val = unit.max_val; 
-  return val; 
-} 
+    @ingroup Units
+ */
+inline double bind_to_unit_limits(double val, const Unit & unit)
+{
+  if (val < unit.min_val)
+    val = unit.min_val;
+  else if (val > unit.max_val)
+    val = unit.max_val;
+  return val;
+}
 
 /** Return a double corresponding to quantity `q` raised to power of double `e`
 
@@ -1279,7 +1279,7 @@ public:
   /// direct copy constructor
   Quantity(const Quantity & q) noexcept : BaseQuantity(q.unit, q.get_value()) {}
 
-  /// direct copy assignment 
+  /// direct copy assignment
   Quantity & operator = (const Quantity & q) noexcept
   {
     if (&q == this)
@@ -1315,29 +1315,31 @@ public:
     return *this;
   }
 
-  /** Construct a Quantity object from a VtlQuantity `q`. 
+  /** Construct a Quantity object from a VtlQuantity `q`.
 
       @param[in] q the VtlQuantity object from the new object will be build
-      @exception UnitNotfound if there is no conversion 
+      @exception UnitNotfound if there is no conversion
    */
   inline Quantity(const VtlQuantity & q);
 
-  /** Assign to this a VtlQuantity `q`. 
+  /** Assign to this a VtlQuantity `q`.
 
       @param[in] q the VtlQuantity object from the new object will be build
-       @exception UnitNotfound if there is no conversion 
+       @exception UnitNotfound if there is no conversion
    */
   inline Quantity & operator = (const VtlQuantity & q);
 
-  /// Sum `rhs` to this. Conversion could be performed and result is validated
-  Quantity & operator += (const Quantity & rhs) 
+  /// Sum `rhs` to this. Conversion could be performed and result is
+  /// validated
+  Quantity & operator += (const Quantity & rhs)
   {
     value += rhs.get_value();
     check_value();
     return *this;
   }
 
-  /// Return this plus `rhs`. Conversion could be performed and result is validated
+  /// Return this plus `rhs`. Conversion could be performed and result
+  /// is validated
   Quantity operator + (const Quantity & rhs) const
   {
     Quantity ret(*this);
@@ -1345,7 +1347,8 @@ public:
     return ret;
   }
 
-  /// Subtract `rhs` to this. Conversion could be performed and result is validated
+  /// Subtract `rhs` to this. Conversion could be performed and result
+  /// is validated
   Quantity & operator -= (const Quantity & rhs)
   {
     value -= rhs.get_value();
@@ -1353,7 +1356,8 @@ public:
     return *this;
   }
 
-  /// Return this minus `rhs`. Conversion could be performed and result is validated
+  /// Return this minus `rhs`. Conversion could be performed and
+  /// result is validated
   Quantity operator - (const Quantity & rhs) const
   {
     Quantity ret(*this);
@@ -1363,7 +1367,7 @@ public:
 
   /** Return this times `rhs`. Conversion could be performed and
       result is validated and converted to corresponding compound
-      unit. 
+      unit.
 
       @exception UnitNotfound if the compound unit does not exist
   */
@@ -1377,7 +1381,7 @@ public:
 
   /** Return this divided by `rhs`. Conversion could be performed and
       result is validated and converted to corresponding compound
-      unit. 
+      unit.
 
       @exception UnitNotfound if the compound unit does not exist
   */
@@ -1479,10 +1483,10 @@ public:
     return fabs(value - r.get_value()) <= e;
   }
 
-  bool is_near(double rhs, double e) const 
-  { 
-    return fabs(value - rhs) <= e; 
-  } 
+  bool is_near(double rhs, double e) const
+  {
+    return fabs(value - rhs) <= e;
+  }
 
   /** Not equal than comparison between this and `rhs`.
 
@@ -1506,11 +1510,11 @@ public:
 
   /// Sum VtlQuantity `rhs` to `this`. Conversion could be performed and
   /// result is validated
-  inline Quantity & operator += (const VtlQuantity & rhs) const;
+  inline Quantity & operator += (const VtlQuantity & rhs);
 
   /// Subtract VtlQuantity `rhs` to `this`. Conversion could be
   /// performed and result is validated
-  inline Quantity & operator -= (const VtlQuantity & rhs) const;
+  inline Quantity & operator -= (const VtlQuantity & rhs);
 
   /// Return this plus the Vtlquantity `rhs`. Conversion could be
   /// performed and result is validated and converted to a VtlQuantity
@@ -1523,7 +1527,7 @@ public:
   /// Return this times the Vtlquantity `rhs`. Conversion could be
   /// performed and result is validated and converted to a VtlQuantity
   inline VtlQuantity  operator * (const VtlQuantity &) const;
-  
+
   /// Return this divided by the Vtlquantity `rhs`. Conversion could
   /// be performed and result is validated and converted to a
   /// VtlQuantity
@@ -1544,7 +1548,7 @@ Quantity<UnitName> operator + (double lhs, const Quantity<UnitName> & rhs)
 
 /* Return the subtraction of a double minus a quantity `rhs`. The
    result is a Quantity with the same unit than `rhs.unit`
-   
+
    @author Leandro Rabindranath Leon
    @ingroup Units
  */
@@ -2332,14 +2336,14 @@ Quantity<UnitName> & Quantity<UnitName>::operator = (const VtlQuantity & q)
   if (q.is_null())
     ALEPHTHROW(InvalidConversion,
 	     "Intent of assigning a Null Unit to a Quantity");
-  
+
   value = unit_convert(q.unit, q.get_value(), unit);
   check_value();
   return *this;
 }
 
 template <class UnitName> Quantity<UnitName> &
-Quantity<UnitName>::operator += (const VtlQuantity & rhs) const
+Quantity<UnitName>::operator += (const VtlQuantity & rhs)
 {
   verify_same_unit(rhs.unit);
   value += rhs.get_value();
@@ -2348,7 +2352,7 @@ Quantity<UnitName>::operator += (const VtlQuantity & rhs) const
 }
 
 template <class UnitName> Quantity<UnitName> &
-Quantity<UnitName>::operator -= (const VtlQuantity & rhs) const
+Quantity<UnitName>::operator -= (const VtlQuantity & rhs)
 {
   verify_same_unit(rhs.unit);
   value -= rhs.get_value();
