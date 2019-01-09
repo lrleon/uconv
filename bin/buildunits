@@ -52,7 +52,7 @@ ucontent = %Q(
 # include <uconv.H>
 # include "#{units_file}"
 
-# include <nlohmann/json.hpp> 
+# include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
@@ -89,7 +89,7 @@ const double Unit::Invalid_Value = numeric_limits<double>::max();
 const VtlQuantity VtlQuantity::null_quantity;
 
 /* The goal of this function is to assure that the tables required by
-   the units system are adequately initialized. 
+   the units system are adequately initialized.
 
    The technique consists in instantiating the required tables as
    static variables of this constructor. In this way we assure that
@@ -102,7 +102,7 @@ UnitsInstancer::UnitsInstancer()
   static size_t count = 0;
   if (count++ > 0)
     return;
-  
+
   static UnitItemTable physicalquantity_tbl;
   static UnitItemTable unit_tbl;
   static DynSetTree<const Unit *> unit_unit_tbl;
@@ -166,7 +166,7 @@ static json to_json(const PhysicalQuantity * const pq)
   j["latex_symbol"] = pq->latex_symbol;
   j["units"] =
     to_vector(pq->units().maps<json>([] (auto p) { return to_json(p); }));
-  
+
   return j;
 }
 
@@ -196,7 +196,7 @@ write_to_file 'uconv_tmp.cc', ucontent
 
 includes = "-I. -I#{uconv_path} -I#{alephw} -I#{json}/include"
 flags = "-Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings "\
-        "-Wno-parentheses -O2 -DNDEBUG -std=c++14"
+        "-Wno-parentheses -O2 -DNDEBUG -std=c++17 -fpic"
 
 symbols_file = `cpp #{includes} #{flags} uconv_tmp.cc uconv_tmp.cxx`
 write_to_file 'tmp', symbols_file

@@ -12,19 +12,19 @@ WARN= -Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings -Wno-paren
 
 # By default this lib is compiled with clang sanitizer options
 # Comment the following line and uncoment the next one if you want
-# full performamce 
-FLAGS = -std=c++14 $(WARN) -O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer
-#FLAGS = -std=c++14 $(WARN) -O2
+# full performamce
+FLAGS = -std=c++17 $(WARN) -O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer
+#FLAGS = -std=c++17 $(WARN) -O2
 
 OPTIONS = $(FLAGS)
-CXXFLAGS= -std=c++14 $(INCLUDES) $(OPTIONS)
+CXXFLAGS= -std=c++17 $(INCLUDES) $(OPTIONS)
 
 LIBSRCS = units-vars.cc
 
 UNITSPATH = $(TOP)/include
 
 SRCS = uconv.cc
-OBJS = uconv.o 
+OBJS = uconv.o
 
 EXTRACT_CV = $(TOP)/bin/extract-cv
 
