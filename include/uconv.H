@@ -1506,11 +1506,11 @@ public:
 
   /// Sum VtlQuantity `rhs` to `this`. Conversion could be performed and
   /// result is validated
-  inline Quantity & operator += (const VtlQuantity & rhs) const;
+  inline Quantity & operator += (const VtlQuantity & rhs);
 
   /// Subtract VtlQuantity `rhs` to `this`. Conversion could be
   /// performed and result is validated
-  inline Quantity & operator -= (const VtlQuantity & rhs) const;
+  inline Quantity & operator -= (const VtlQuantity & rhs);
 
   /// Return this plus the Vtlquantity `rhs`. Conversion could be
   /// performed and result is validated and converted to a VtlQuantity
@@ -2339,7 +2339,7 @@ Quantity<UnitName> & Quantity<UnitName>::operator = (const VtlQuantity & q)
 }
 
 template <class UnitName> Quantity<UnitName> &
-Quantity<UnitName>::operator += (const VtlQuantity & rhs) const
+Quantity<UnitName>::operator += (const VtlQuantity & rhs)
 {
   verify_same_unit(rhs.unit);
   value += rhs.get_value();
@@ -2348,7 +2348,7 @@ Quantity<UnitName>::operator += (const VtlQuantity & rhs) const
 }
 
 template <class UnitName> Quantity<UnitName> &
-Quantity<UnitName>::operator -= (const VtlQuantity & rhs) const
+Quantity<UnitName>::operator -= (const VtlQuantity & rhs)
 {
   verify_same_unit(rhs.unit);
   value -= rhs.get_value();

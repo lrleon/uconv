@@ -32,9 +32,13 @@
 # include <memory>
 # include <sstream>
 # include <string>
+# include <iostream>
+# include <stdexcept>
 
 # include <ah-string-utils.H>
 # include <tpl_dynMapTree.H>
+
+using namespace std;
 
 /** This is a basic descriptor used for physical quantities and units.
 

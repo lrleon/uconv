@@ -1,0 +1,33 @@
+# Generation of units headers
+# We use bin/gen-units to generate C++ headers in include/units from the Ruby DSL
+
+set(GEN_UNITS ${CMAKE_SOURCE_DIR}/bin/gen-units)
+set(UNITS_DSL ${CMAKE_SOURCE_DIR}/lib/units.rb)
+set(UNITS_DSL_DIR ${CMAKE_SOURCE_DIR}/lib/unit-defs)
+set(UNITS_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/include/units)
+set(ALL_UNITS_H ${UNITS_OUTPUT_DIR}/all_units.H)
+set(UCONV_CC ${CMAKE_CURRENT_SOURCE_DIR}/uconv.cc)
+
+# List all DSL files for dependency tracking
+file(GLOB DSL_FILES "${UNITS_DSL_DIR}/*.rb")
+
+# Custom command to generate headers
+add_custom_command(
+    OUTPUT ${ALL_UNITS_H}
+    COMMAND ruby ${GEN_UNITS} ${UNITS_DSL} ${UNITS_OUTPUT_DIR}
+    DEPENDS ${GEN_UNITS} ${UNITS_DSL} ${DSL_FILES}
+    COMMENT "Generating C++ units headers from Ruby DSL"
+)
+
+# Create the static library uconv
+# We include ALL_UNITS_H in sources to ensure the custom command runs
+# uconv.cc now includes all_units.H directly
+add_library(uconv STATIC ${UCONV_CC} ${ALL_UNITS_H})
+
+# Include directories for the library
+target_include_directories(uconv PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${ALEPHW}
+    ${JSON_PATH}/include
+    ${CMAKE_CURRENT_BINARY_DIR}
+)

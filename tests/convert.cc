@@ -99,13 +99,17 @@ void list_sibling_units(const Unit & unit)
 
 CmdLine cmd("conversion", ' ', "0");
 
-vector<string> units = to_vector(flatten(Unit::units().
-					 maps<DynList<string>>([] (auto u)
-  { return build_dynlist<string>(u->name, u->symbol); })));
+// Helper to build units vector avoiding flatten issues
+vector<string> build_units_vector() {
+    DynList<string> all_unit_strings;
+    Unit::units().for_each([&all_unit_strings](auto u) {
+        all_unit_strings.append(u->name);
+        all_unit_strings.append(u->symbol);
+    });
+    return to_vector(all_unit_strings);
+}
 
-// vector<string> units =
-//   to_vector(Unit::units().maps<string>([] (auto u)
-//   { return u->symbol; }));
+vector<string> units = build_units_vector();
   
 ValuesConstraint<string> allowed(units);
 ValueArg<string> unit = { "u", "unit-symbol", "symbol of unit",
@@ -122,7 +126,7 @@ ValueArg<string> unit_list = { "L", "list-units",
 			       "list units associated to a physical quantity",
 			       false, "", &pq_allowed, cmd };
 
-ValueArg<double> sample = {"s", "sample", "sample", false, 0, "sample", cmd};
+ValueArg<double> sample_val = {"s", "sample", "sample", false, 0, "sample", cmd};
 
 ValueArg<string> source = {"S", "source-unit", "source unit", false,
 			   "", "source unit", cmd};
@@ -206,12 +210,12 @@ void test(int argc, char *argv[])
 	  exit(0);
 	}
 
-      VtlQuantity val(*src_ptr, sample.getValue());
+      VtlQuantity val(*src_ptr, sample_val.getValue());
       cout << VtlQuantity(*tgt_ptr, val).raw() << endl;
       exit(0);
     }
 
-  if (not unit.isSet() and not sample.isSet())
+  if (not unit.isSet() and not sample_val.isSet())
     {
       cout << "Flags -u and -s must be set" << endl;
       abort();
@@ -229,7 +233,7 @@ void test(int argc, char *argv[])
        << "Conversions:" << endl
        << endl;
 
-  VtlQuantity val(*unit_ptr, sample.getValue());
+  VtlQuantity val(*unit_ptr, sample_val.getValue());
 
   for (auto u : Unit::units(unit_ptr->physical_quantity))
     {
