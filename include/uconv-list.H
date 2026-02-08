@@ -29,7 +29,7 @@
 # include <uconv.H>
 
 // Include all generated units
-# include "units/all_units.H"
+# include "all_units.H"
 
 // Include dummy unit for tests (still using macros)
 # include "units/dummy-unit.H"

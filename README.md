@@ -30,14 +30,16 @@ A C++20 units and physical-quantities conversion library with:
 The project is currently organized around the DSL pipeline:
 
 - Source of truth for units DSL: `lib/unit-defs.rb` + `lib/unit-defs/*.rb`
-- Generated C++ headers: `include/units/*.H`
+- Generated C++ headers: `<build-dir>/generated/units/*.H`
 - Core runtime API: `include/uconv.H`
 - Unit tests (GoogleTest + `ctest`): `Tests/`
 - CLI utilities (manual checks/tools): `utils/`
 
+Generated headers are build artifacts and are not versioned in Git.
+
 ## Repository Layout
 
-- `include/`: public headers (`uconv.H`, generated units headers, helper headers)
+- `include/`: public headers (`uconv.H`, helper headers)
 - `lib/`: core implementation and DSL definitions
 - `bin/gen-units`: Ruby generator + DSL validator
 - `Tests/`: automated unit tests
@@ -92,7 +94,7 @@ cmake -S . -B cmake-build-debug -DALEPHW=/path/to/Aleph-w -DJSON_PATH=/path/to/j
 cmake --build cmake-build-debug -j
 ```
 
-This build automatically regenerates `include/units/*.H` from the DSL when needed.
+This build automatically regenerates `<build-dir>/generated/units/*.H` from the DSL when needed.
 
 ## Build Targets
 
@@ -178,7 +180,7 @@ Required metadata:
 ### 3. Regenerate headers
 
 ```bash
-ruby bin/gen-units lib/unit-defs.rb include/units
+ruby bin/gen-units lib/unit-defs.rb <build-dir>/generated/units
 ```
 
 ### 4. Build and test
@@ -218,7 +220,7 @@ Output:
 ### What is documented
 
 - Full public API in `include/uconv.H`
-- Generated units headers (`include/units/*.H`)
+- Generated units headers (`<build-dir>/generated/units/*.H`)
 - DSL source files (`lib/unit-defs.rb`, `lib/unit-defs/*.rb`)
 - Markdown docs in `docs/`
 
@@ -258,7 +260,7 @@ Set `JSON` env var or pass `-DJSON_PATH=...`.
 Run directly to see validation errors:
 
 ```bash
-ruby bin/gen-units lib/unit-defs.rb include/units
+ruby bin/gen-units lib/unit-defs.rb <build-dir>/generated/units
 ```
 
 ### Docs target not available

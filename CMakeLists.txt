@@ -32,6 +32,10 @@ include_directories(${JSON_PATH}/include)
 # Compilation options
 add_compile_options(-Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings -Wno-parentheses)
 
+# Generated artifacts live in the build tree.
+set(UCONV_GENERATED_DIR ${CMAKE_BINARY_DIR}/generated)
+set(UCONV_GENERATED_UNITS_DIR ${UCONV_GENERATED_DIR}/units)
+
 # Sanitizers (enabled by default as in Imakefile)
 option(ENABLE_SANITIZERS "Enable address and undefined sanitizers" ON)
 if(ENABLE_SANITIZERS)

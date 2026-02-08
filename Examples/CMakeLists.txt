@@ -14,5 +14,6 @@ set(EXAMPLES
 
 foreach(ex ${EXAMPLES})
     add_executable(${ex} ${ex}.cc)
+    add_dependencies(${ex} uconv)
     target_link_libraries(${ex} uconv ${ALEPH_LIB} ${GSL_LIB} ${GSLCBLAS_LIB} ${M_LIB})
 endforeach()

@@ -6,3 +6,6 @@ Makefile
 gitversion.H
 tests/unittests/*.cc
 lib/zen.cc
+
+# Generated unit headers (build output). They should never be committed from source tree.
+include/units/*.H

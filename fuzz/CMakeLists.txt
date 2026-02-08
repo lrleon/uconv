@@ -16,4 +16,5 @@ find_library(ALEPH_LIB Aleph PATHS ${ALEPHW} NO_DEFAULT_PATH)
 set(LINK_LIBS uconv ${ALEPH_LIB} ${GSL_LIB} ${GSLCBLAS_LIB} ${M_LIB})
 
 add_executable(simple simple.cc)
+add_dependencies(simple uconv)
 target_link_libraries(simple ${LINK_LIBS})

@@ -25,6 +25,7 @@ set(TEST_SOURCES
 foreach(test_src ${TEST_SOURCES})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(Test_${test_name} ${test_src})
+    add_dependencies(Test_${test_name} uconv)
     target_link_libraries(Test_${test_name} uconv ${ALEPH_LIB} ${GSL_LIB} ${GSLCBLAS_LIB} ${M_LIB} GTest::GTest GTest::Main Threads::Threads)
     add_test(NAME ${test_name} COMMAND Test_${test_name})
 endforeach()
