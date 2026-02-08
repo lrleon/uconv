@@ -295,6 +295,7 @@ Current workflows (`.github/workflows/`):
 - `ci.yml`: matrix build/test + sanitizers (`gcc` and `clang`, Debug) + docs warnings gate
 - `docs.yml`: build and publish Doxygen site to GitHub Pages
 - `full_analysis.yml`: scheduled deeper analysis (build/test/cppcheck/docs)
+- All workflows clone `Aleph-w`, build `libAleph.a`, and export `ALEPHW_DIR` before configuring `uconv`.
 
 ## Troubleshooting
 

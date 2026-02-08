@@ -37,6 +37,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake ninja-build pkg-config ccache git ruby-full \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
             nlohmann-json3-dev \
             libgtest-dev
 
@@ -63,6 +64,20 @@ jobs:
       - name: Checkout Aleph-w dependency
         run: |
           git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
           echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
 
       - name: Cache ccache
@@ -130,6 +145,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake ninja-build pkg-config ccache git ruby-full \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
             nlohmann-json3-dev \
             libgtest-dev
 
@@ -156,6 +172,20 @@ jobs:
       - name: Checkout Aleph-w dependency
         run: |
           git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
           echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
 
       - name: Cache ccache
@@ -216,12 +246,25 @@ jobs:
           sudo apt-get install -y \
             cmake ninja-build git ruby-full \
             doxygen graphviz g++ \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
             nlohmann-json3-dev \
             libgtest-dev
 
       - name: Checkout Aleph-w dependency
         run: |
           git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
           echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
 
       - name: Configure
@@ -256,6 +299,11 @@ jobs:
           test "$pq_count" -gt 0
           test "$unit_count" -gt 0
           test "$conv_count" -gt 0
+
+          # Strong regression gate: fail if catalog coverage drops too much.
+          test "$pq_count" -ge 10
+          test "$unit_count" -ge 40
+          test "$conv_count" -ge 100
 
       - name: Gate on Doxygen warnings
         run: |
