@@ -38,7 +38,6 @@
 # include <ah-string-utils.H>
 # include <tpl_dynMapTree.H>
 
-using namespace std;
 
 /** This is a basic descriptor used for physical quantities and units.
 
@@ -75,27 +74,27 @@ public:
     // empty
   }
 
-  string to_string() const
+  std::string to_string() const
   {
-    ostringstream s;
-    s << "UnitItem name = " << name << endl
-      << "Symbol        = " << symbol << endl
+    std::ostringstream s;
+    s << "UnitItem name = " << name << std::endl
+      << "Symbol        = " << symbol << std::endl
       << "Description   = " << description;
     return s.str();
   }
 
-  string to_string(size_t width, size_t left_margin = 0) const
+  std::string to_string(std::size_t width, std::size_t left_margin = 0) const
   {
-    const string margin(left_margin, ' ');
-    ostringstream s;
-    s << margin << "UnitItem name = " << name << endl
-      << margin << "Symbol        = " << symbol << endl
+    const std::string margin(left_margin, ' ');
+    std::ostringstream s;
+    s << margin << "UnitItem name = " << name << std::endl
+      << margin << "Symbol        = " << symbol << std::endl
       << margin << "Description   = "
       << align_text_to_left_except_first(description, width, 16);
     return s.str();
   }
 
-  friend ostream & operator << (ostream & out, const UnitItem & ui)
+  friend std::ostream & operator << (std::ostream & out, const UnitItem & ui)
   {
     return out << ui.to_string();
   }
@@ -119,11 +118,11 @@ public:
   }
 
   /// Return all the stored descriptor names.
-  DynList<string> names() const { return name_tbl.keys(); }
+  DynList<std::string> names() const { return name_tbl.keys(); }
 
-  DynList<string> symbols() const { return symbol_tbl.keys(); }
+  DynList<std::string> symbols() const { return symbol_tbl.keys(); }
 
-  /// Return an iterator to a list of pair<string, const UnitItem*>
+  /// Return an iterator to a list of std::pair<std::string, const UnitItem*>
   /// items. First item is the descriptor name and the second one is a
   /// pointer to the descriptor.
   auto get_it() { return name_tbl.get_it(); }
@@ -132,23 +131,23 @@ public:
 
       @param[in] ptr pointer to the descriptor. It must correctly allocated.
       @throw bad_alloc if there is no enough memory.
-      @throw domain_error if it already exists a descriptor with the
+      @throw std::domain_error if it already exists a descriptor with the
       same name or the same symbol.
    */
   void register_item(const UnitItem * ptr)
   {
     if (name_tbl.contains(ptr->name))
       {
-	ostringstream s;
+	std::ostringstream s;
 	s << " name " << ptr->name << " already exist";
-	throw domain_error(s.str());
+	throw std::domain_error(s.str());
       }
 
     if (symbol_tbl.contains(ptr->symbol))
       {
-	ostringstream s;
+	std::ostringstream s;
 	s << "unit symbol " << ptr->symbol << " already exist";
-	throw domain_error(s.str());
+	throw std::domain_error(s.str());
       }
     
     name_tbl.insert(ptr->name, ptr);
@@ -156,20 +155,20 @@ public:
   }
 
   /// Return true if the table contains a descriptor with name `name`.
-  bool exists_name(const string & name) const noexcept
+  bool exists_name(const std::string & name) const noexcept
   {
     return name_tbl.contains(name);
   }
 
   /// Return true if the table contains a descriptor with symbol `symbol`.
-  bool exists_symbol(const string & symbol) const noexcept
+  bool exists_symbol(const std::string & symbol) const noexcept
   {
     return symbol_tbl.contains(symbol);
   }
 
   /// Return a pointer to the descriptor containing the name `name` if
   /// this exists; otherwise, it returns `nullptr`
-  const UnitItem * search_by_name(const string & name) const noexcept
+  const UnitItem * search_by_name(const std::string & name) const noexcept
   {
     auto p = name_tbl.search(name);
     return p ? p->second : nullptr;
@@ -177,37 +176,37 @@ public:
 
   /// Return a pointer to the descriptor containing the symbol `symbol` if
   /// this exists; otherwise, it returns `nullptr`
-  const UnitItem * search_by_symbol(const string & symbol) const noexcept
+  const UnitItem * search_by_symbol(const std::string & symbol) const noexcept
   {
     auto p = symbol_tbl.search(symbol);
     return p ? p->second : nullptr;
   }
 
   /// Return the number of descriptors stored.
-  size_t size() const noexcept { return name_tbl.size(); }
+  std::size_t size() const noexcept { return name_tbl.size(); }
 
-  /// Throw `domain_error` exception if the descriptor pointed by
-  /// `ptr` already contains the string `str` as name or symbol. It is
+  /// Throw `std::domain_error` exception if the descriptor pointed by
+  /// `ptr` already contains the std::string `str` as name or symbol. It is
   /// a helper validation function.
-  void validate(const UnitItem * ptr, const string & str)
+  void validate(const UnitItem * ptr, const std::string & str)
   {
     {
-      const string & name = ptr->name;
+      const std::string & name = ptr->name;
       if (exists_name(str))
 	{
-	  ostringstream s;
+	  std::ostringstream s;
 	  s << "Repeated " << str << " name " << name;
-	  throw domain_error(s.str());
+	  throw std::domain_error(s.str());
 	}
     }
 
     {
-      const string & symbol = ptr->symbol;
+      const std::string & symbol = ptr->symbol;
       if (exists_symbol(str))
 	{
-	  ostringstream s;
+	  std::ostringstream s;
 	  s << "Repeated " << str << " symbol " << symbol;
-	  throw domain_error(s.str());
+	  throw std::domain_error(s.str());
 	}
     }
   }

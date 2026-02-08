@@ -30,7 +30,6 @@
 
 # include <line.H>
 
-using namespace std;
 using namespace testing;
 using namespace Aleph;
 

@@ -57,7 +57,6 @@
 # include "unititem.H"
 # include "unit-exceptions.H"
 
-using namespace std;
 
 /// Sentinel value used for invalid/null quantities.
 constexpr double Unit_Invalid_Value = -1000;
@@ -144,10 +143,10 @@ protected:
       @param[in] latex_symbol the symbol in LaTeX math model
       @param[in] desc test describing the magnitude
  */
-  PhysicalQuantity(const string & name,
-                   const string & symbol,
-                   const string & latex_symbol,
-                   const string & desc)
+  PhysicalQuantity(const std::string & name,
+                   const std::string & symbol,
+                   const std::string & latex_symbol,
+                   const std::string & desc)
     : UnitItem(name, symbol, latex_symbol, desc)
   {
     assert(tbl != nullptr);
@@ -168,9 +167,9 @@ public:
   }
 
   /// Return a list of names of the all defined physical magnitudes
-  static DynList<string> names() { return tbl->names(); }
+  static DynList<std::string> names() { return tbl->names(); }
 
-  static const PhysicalQuantity * search(const string & name)
+  static const PhysicalQuantity * search(const std::string & name)
   {
     assert(tbl != nullptr);
     const auto ptr = tbl->search_by_name(name);
@@ -181,8 +180,8 @@ public:
 /** Defines a new physical magnitude
 
     @param[in] __name of the new physical quantity class
-    @param[in] symbol string used as unit symbol
-    @param[in] lsymbol string used as unit LaTeX symbol
+    @param[in] symbol std::string used as unit symbol
+    @param[in] lsymbol std::string used as unit LaTeX symbol
     @param[in] desc description
 
     @author Leandro Rabindranath Leon
@@ -231,7 +230,7 @@ public:
     if (not (ratio <= 0 or ratio > 0.3))
       return;
 
-    ostringstream s;
+    std::ostringstream s;
     s << "epsilon ratio " << ratio << " is not inside (0, " << ratio << ")";
     ALEPHTHROW(WrongUnitRatio, s.str());
   }
@@ -256,44 +255,44 @@ public:
   [[nodiscard]] inline VtlQuantity min() const noexcept; /// Return minimum allowed value
   [[nodiscard]] inline VtlQuantity max() const noexcept; /// Return maximum allowed value
 
-  /// string representation of the quantity
-  [[nodiscard]] string to_string() const
+  /// std::string representation of the quantity
+  [[nodiscard]] std::string to_string() const
   {
-    ostringstream s;
-    s << "Unit name         = " << name << endl
-        << "symbol            = " << symbol << endl
-        << "latex symbol      = " << latex_symbol << endl
-        << "physical quantity = " << physical_quantity.name << endl
-        << "min               = " << min_val << endl
-        << "max               = " << max_val << endl
+    std::ostringstream s;
+    s << "Unit name         = " << name << std::endl
+        << "symbol            = " << symbol << std::endl
+        << "latex symbol      = " << latex_symbol << std::endl
+        << "physical quantity = " << physical_quantity.name << std::endl
+        << "min               = " << min_val << std::endl
+        << "max               = " << max_val << std::endl
         << "epsilon           = " << epsilon << "( " << 100 * epsilon << " %)";
     return s.str();
   }
 
-  /** Formatted string representation of the quantity
+  /** Formatted std::string representation of the quantity
 
       @param[in] width
       @param[in] left_margin number of spaces to the left
  */
-  [[nodiscard]] string to_string(const size_t width, const size_t left_margin = 0) const
+  [[nodiscard]] std::string to_string(const std::size_t width, const std::size_t left_margin = 0) const
   {
-    const string margin = string(left_margin, ' ');
-    ostringstream s;
-    s << margin << "Unit name         = " << name << endl
-        << margin << "symbol            = " << symbol << endl
-        << margin << "latex symbol      = " << latex_symbol << endl
+    const std::string margin = std::string(left_margin, ' ');
+    std::ostringstream s;
+    s << margin << "Unit name         = " << name << std::endl
+        << margin << "symbol            = " << symbol << std::endl
+        << margin << "latex symbol      = " << latex_symbol << std::endl
         << margin << "description       = "
         << align_text_to_left_except_first(description, width, left_margin + 20)
-        << endl
-        << margin << "physical quantity = " << physical_quantity.name << endl
-        << margin << "min               = " << min_val << endl
-        << margin << "max               = " << max_val << endl
+        << std::endl
+        << margin << "physical quantity = " << physical_quantity.name << std::endl
+        << margin << "min               = " << min_val << std::endl
+        << margin << "max               = " << max_val << std::endl
         << margin << "epsilon           = " << epsilon
         << "( " << 100 * epsilon << " %)";
     return s.str();
   }
 
-  friend ostream &operator <<(ostream & out, const Unit & unit)
+  friend std::ostream &operator <<(std::ostream & out, const Unit & unit)
   {
     return out << unit.to_string();
   }
@@ -305,7 +304,7 @@ private:
 
 public:
   /// return the number of units
-  static size_t size() { return unit_tbl->size(); }
+  static std::size_t size() { return unit_tbl->size(); }
 
   /// Return a list of all declared and used units
   static DynList<const Unit *> units() { return unit_tbl->keys(); }
@@ -333,11 +332,11 @@ public:
 
   /** Search the unit associated to a name
 
-      @param[in] symbol string containing the unit name
+      @param[in] symbol std::string containing the unit name
       @return constant pointer to the symbol. If the name is not
       found, then `nullptr` is returned
   */
-  static const Unit * search_by_name(const string & symbol)
+  static const Unit * search_by_name(const std::string & symbol)
   {
     assert(tbl != nullptr);
     const UnitItem *ptr = tbl->search_by_name(symbol);
@@ -347,11 +346,11 @@ public:
 
   /** Search the unit associated to a symbol
 
-      @param[in] symbol string containing the unit symbol
+      @param[in] symbol std::string containing the unit symbol
       @return constant pointer to the symbol. If the symbol is not
       found, then `nullptr` is returned
   */
-  static const Unit * search_by_symbol(const string & symbol)
+  static const Unit * search_by_symbol(const std::string & symbol)
   {
     assert(tbl != nullptr);
     const auto ptr = tbl->search_by_symbol(symbol);
@@ -360,7 +359,7 @@ public:
   }
 
   /// Search by unit name o symbol
-  static const Unit * search(const string & str)
+  static const Unit * search(const std::string & str)
   {
     const auto ptr = search_by_name(str);
     return ptr ? ptr : search_by_symbol(str);
@@ -375,15 +374,15 @@ public:
   Unit() : physical_quantity(PhysicalQuantity::null_physical_quantity) {}
 
 protected:
-  Unit(const string & name, const string & symbol, const string & latex_symbol,
-       const string & desc, const PhysicalQuantity & phy_q,
+  Unit(const std::string & name, const std::string & symbol, const std::string & latex_symbol,
+       const std::string & desc, const PhysicalQuantity & phy_q,
        const double min, const double max, const double epsilon_ratio = 0.05)
     : UnitItem(name, symbol, latex_symbol, desc), physical_quantity(phy_q),
       min_val(min), max_val(max)
   {
     if (min_val > max_val)
       {
-        ostringstream s;
+        std::ostringstream s;
         s << "Unit constructor: minimum value " << min_val
             << " is greater than maximum value " << max_val;
         ALEPHTHROW(MinMaxReversed, s.str());
@@ -405,12 +404,12 @@ public:
   [[nodiscard]] double default_value() const noexcept { return (min_val + max_val) / 2; }
 };
 
-/** Return a string representing a json describing all registered units
+/** Return a std::string representing a json describing all registered units
 
     @author Leandro Rabindranath Leon
     @ingroup Units
  */
-extern string units_json();
+extern std::string units_json();
 
 /** Unit conversion function pointer type
 
@@ -419,7 +418,7 @@ extern string units_json();
  */
 using Unit_Convert_Fct_Ptr = double (*)(double);
 
-/** Functor for comparing pair of units. It is used for the hash
+/** Functor for comparing std::pair of units. It is used for the hash
     tables containing conversion functions
 
     @author Leandro Rabindranath Leon
@@ -428,8 +427,8 @@ using Unit_Convert_Fct_Ptr = double (*)(double);
 struct UnitPairEqual
 {
   bool operator ()
-  (const pair<pair<const Unit *, const Unit *>, Unit_Convert_Fct_Ptr> & p1,
-   const pair<pair<const Unit *, const Unit *>, Unit_Convert_Fct_Ptr> & p2)
+  (const std::pair<std::pair<const Unit *, const Unit *>, Unit_Convert_Fct_Ptr> & p1,
+   const std::pair<std::pair<const Unit *, const Unit *>, Unit_Convert_Fct_Ptr> & p2)
   const noexcept
   {
     return p1.first == p2.first;
@@ -437,12 +436,12 @@ struct UnitPairEqual
 };
 
 using UnitMap =
-ODhashTable<pair<pair<const Unit *, const Unit *>, Unit_Convert_Fct_Ptr>,
+ODhashTable<std::pair<std::pair<const Unit *, const Unit *>, Unit_Convert_Fct_Ptr>,
             UnitPairEqual>;
 
 # include "multiunitmap.H"
 
-/** Hash table mapping pair of unit references to conversion functions.
+/** Hash table mapping std::pair of unit references to conversion functions.
 
     @author Leandro Rabindranath Leon
     @ingroup Units
@@ -472,8 +471,8 @@ struct __always_false : std::false_type
     @author Leandro Rabindranath Leon
     @ingroup Units
  */
-inline const Unit * search_product_compound_unit(const string & uname1,
-                                                 const string & uname2)
+inline const Unit * search_product_compound_unit(const std::string & uname1,
+                                                 const std::string & uname2)
 {
   (void) init_units();
   assert(__compound_unit_tbl != nullptr);
@@ -485,8 +484,8 @@ inline const Unit * search_product_compound_unit(const string & uname1,
     @author Leandro Rabindranath Leon
     @ingroup Units
  */
-inline const Unit * search_ratio_compound_unit(const string & uname1,
-                                               const string & uname2)
+inline const Unit * search_ratio_compound_unit(const std::string & uname1,
+                                               const std::string & uname2)
 {
   (void) init_units();
   assert(__compound_unit_tbl != nullptr);
@@ -500,8 +499,8 @@ inline const Unit * search_ratio_compound_unit(const string & uname1,
 
     @ingroup Units
  */
-inline const Unit * search_compound_unit(const string & uname1,
-                                         const string & uname2)
+inline const Unit * search_compound_unit(const std::string & uname1,
+                                         const std::string & uname2)
 {
   return search_product_compound_unit(uname1, uname2);
 }
@@ -521,7 +520,7 @@ struct CompoundUnitRegister
   {
     (void) init_units();
     assert(__compound_unit_tbl != nullptr);
-    DynList<string> names = {SourceUnits::get_instance().name...};
+    DynList<std::string> names = {SourceUnits::get_instance().name...};
 
     if constexpr (Op == CompoundUnitOp::Product)
       (void) __compound_unit_tbl->insert_product(names, CompoundUnit::get_instance());
@@ -580,7 +579,7 @@ struct Combine_Units : Divide_Units<Units...>
 /** Compile-time conversion specialization point.
 
     Every valid conversion must provide a specialization of this function.
-    If no specialization exists for the pair `<SrcUnit, TgtUnit>`, compilation fails.
+    If no specialization exists for the std::pair `<SrcUnit, TgtUnit>`, compilation fails.
 
     @ingroup Units
  */
@@ -606,8 +605,8 @@ inline Unit_Convert_Fct_Ptr
 search_conversion(const Unit & src, const Unit & tgt)
 {
   assert(__unit_map != nullptr);
-  using UP = pair<const Unit *, const Unit *>;
-  pair<UP, Unit_Convert_Fct_Ptr> p;
+  using UP = std::pair<const Unit *, const Unit *>;
+  std::pair<UP, Unit_Convert_Fct_Ptr> p;
   p.first = UP(&src, &tgt); // saves copy
   auto ptr = __unit_map->search(p);
   return ptr == nullptr ? nullptr : ptr->second;
@@ -639,8 +638,8 @@ public:
 
     fct_ptr = &unit_convert<SrcUnit, TgtUnit>;
 
-    using UP = pair<const Unit *, const Unit *>;
-    using P = pair<UP, Unit_Convert_Fct_Ptr>;
+    using UP = std::pair<const Unit *, const Unit *>;
+    using P = std::pair<UP, Unit_Convert_Fct_Ptr>;
 
     (void) __unit_map->insert(P(UP(&src_instance, &tgt_instance), fct_ptr));
 
@@ -664,13 +663,13 @@ inline bool exist_conversion(const Unit & src, const Unit & tgt)
 /** Return `true` if it exists conversion from `src_symbol` unit to
     `tgt_symbol` unit
 
-    Both parameters are string corresponding to unit symbols
+    Both parameters are std::string corresponding to unit symbols
 
     @author Leandro Rabindranath Leon
     @ingroup Units
  */
-inline bool exist_conversion(const string & src_symbol,
-                             const string & tgt_symbol)
+inline bool exist_conversion(const std::string & src_symbol,
+                             const std::string & tgt_symbol)
 {
   const Unit *src_unit = Unit::search_by_symbol(src_symbol);
   if (src_unit == nullptr)
@@ -698,13 +697,13 @@ conversion_exist(const char *src_symbol, const char *tgt_symbol);
     `tgt_symbol` unit. If the conversion does not exist, then returns
     `nullptr`
 
-    Both parameters are string corresponding to unit symbols
+    Both parameters are std::string corresponding to unit symbols
 
     @author Leandro Rabindranath Leon
     @ingroup Units
  */
-inline Unit_Convert_Fct_Ptr search_conversion_fct(const string & src_symbol,
-                                                  const string & tgt_symbol)
+inline Unit_Convert_Fct_Ptr search_conversion_fct(const std::string & src_symbol,
+                                                  const std::string & tgt_symbol)
 {
   const Unit *src_unit = Unit::search_by_symbol(src_symbol);
   if (src_unit == nullptr)
@@ -737,7 +736,7 @@ inline double unit_convert(const Unit & src_unit,
   const auto fct = search_conversion(src_unit, tgt_unit);
   if (fct == nullptr)
     {
-      ostringstream s;
+      std::ostringstream s;
       s << "Conversion from unit name " << src_unit.name << " to unit name "
           << tgt_unit.name << " has not been registered";
       ALEPHTHROW(UnitConversionNotFound, s.str());
@@ -772,7 +771,7 @@ unit_convert(const Unit & src_unit, const C & c, const Unit & tgt_unit)
   const auto fct = search_conversion(src_unit, tgt_unit);
   if (fct == nullptr)
     {
-      ostringstream s;
+      std::ostringstream s;
       s << "Conversion from unit name " << src_unit.name << " to unit name "
           << tgt_unit.name << " has not been registered";
       ALEPHTHROW(UnitConversionNotFound, s.str());
@@ -810,7 +809,7 @@ mutable_unit_convert(const Unit & src_unit, C & c, const Unit & tgt_unit)
   auto fct = search_conversion(src_unit, tgt_unit);
   if (fct == nullptr)
     {
-      ostringstream s;
+      std::ostringstream s;
       s << "Conversion from unit name " << src_unit.name << " to unit name "
           << tgt_unit.name << " has not been registered";
       ALEPHTHROW(UnitConversionNotFound, s.str());
@@ -828,9 +827,9 @@ mutable_unit_convert(const Unit & src_unit, C & c, const Unit & tgt_unit)
     @author Leandro Rabindranath Leon
     @ingroup Units
  */
-inline double unit_convert_name_to_name(const string & src_name,
+inline double unit_convert_name_to_name(const std::string & src_name,
                                         const double val,
-                                        const string & tgt_name)
+                                        const std::string & tgt_name)
 {
   const auto src_unit_ptr = Unit::search_by_name(src_name);
   if (src_unit_ptr == nullptr)
@@ -843,7 +842,7 @@ inline double unit_convert_name_to_name(const string & src_name,
   const auto fct = search_conversion(*src_unit_ptr, *tgt_unit_ptr);
   if (fct == nullptr)
     {
-      ostringstream s;
+      std::ostringstream s;
       s << "Conversion from unit name " << src_name << " to unit name "
           << tgt_name << " has not been registered";
       ALEPHTHROW(UnitConversionNotFound, s.str());
@@ -861,9 +860,9 @@ inline double unit_convert_name_to_name(const string & src_name,
     @author Leandro Rabindranath Leon
     @ingroup Units
  */
-inline double unit_convert_symbol_to_symbol(const string & src_symbol,
+inline double unit_convert_symbol_to_symbol(const std::string & src_symbol,
                                             double val,
-                                            const string & tgt_symbol)
+                                            const std::string & tgt_symbol)
 {
   const auto src_unit_ptr = Unit::search_by_symbol(src_symbol);
   if (src_unit_ptr == nullptr)
@@ -876,7 +875,7 @@ inline double unit_convert_symbol_to_symbol(const string & src_symbol,
   auto fct = search_conversion(*src_unit_ptr, *tgt_unit_ptr);
   if (fct == nullptr)
     {
-      ostringstream s;
+      std::ostringstream s;
       s << "Conversion from unit symbol " << src_symbol << " to unit symbol "
           << tgt_symbol << " has not been registered";
       ALEPHTHROW(UnitConversionNotFound, s.str());
@@ -1074,7 +1073,7 @@ extern double unit_convert(const char *src_symbol, const char *tgt_symbol,
 
 /** Base class for quantities.
 
-    A quantity con be seen as a pair composed by a numerical value and
+    A quantity con be seen as a std::pair composed by a numerical value and
     its unit.
 
     Excepting for some helper static and instance methods, this class
@@ -1125,13 +1124,13 @@ public:
 
 protected:
   /// helper for validating that value is in [min_val, max_val]. It
-  /// throws range_error if the value is not in the interval
+  /// throws std::range_error if the value is not in the interval
   void check_value() const
   {
     if (is_valid(value, unit))
       return;
 
-    ostringstream s;
+    std::ostringstream s;
     s << "Value (" << value << " " << unit.name
         << ") is not inside in [" << unit.min_val << ", "
         << unit.max_val << "] epsilon = " << unit.get_epsilon()
@@ -1145,9 +1144,9 @@ protected:
     if ((void *) &unit.physical_quantity == (void *) &(q.unit.physical_quantity))
       return;
 
-    ostringstream s;
-    s << "Unit does not refer to the same physical quantity" << endl
-        << "Source physical quantity = " << unit.physical_quantity.name << endl
+    std::ostringstream s;
+    s << "Unit does not refer to the same physical quantity" << std::endl
+        << "Source physical quantity = " << unit.physical_quantity.name << std::endl
         << "target physical quantity = " << q.unit.physical_quantity.name;
     ALEPHTHROW(WrongSiblingUnit, s.str());
   }
@@ -1157,7 +1156,7 @@ protected:
     if (&this->unit == &__unit)
       return;
 
-    ostringstream s;
+    std::ostringstream s;
     s << "Different units: " << unit.name << " != " << __unit.name;
     ALEPHTHROW(DifferentUnits, s.str());
   }
@@ -1197,14 +1196,14 @@ public:
   [[nodiscard]] double raw() const noexcept { return value; }
 
   /// Return the stringfied value (the unit symbol is concatenated)
-  [[nodiscard]] string to_string() const
+  [[nodiscard]] std::string to_string() const
   {
-    ostringstream s;
+    std::ostringstream s;
     s << value << " " << unit.symbol;
     return s.str();
   }
 
-  friend ostream &operator <<(ostream & out, const BaseQuantity & q)
+  friend std::ostream &operator <<(std::ostream & out, const BaseQuantity & q)
   {
     return out << q.to_string();
   }
@@ -1410,7 +1409,7 @@ inline double cbrtl(const BaseQuantity & q)
 /** Quantity class
 
     A Quantity object is a double value whose unit type is defined as
-     a template parameter in compiling time.
+     a template parameter at compile time.
 
     The operations on Quantity object automatically perform the
     conversion when different units are involved.
@@ -1680,12 +1679,12 @@ public:
   bool is_near(const Quantity<U> & rhs, double e) const
   {
     Quantity r = {rhs}; // here the conversion is done
-    return fabs(value - r.get_value()) <= e;
+    return std::fabs(value - r.get_value()) <= e;
   }
 
   bool is_near(double rhs, double e) const
   {
-    return fabs(value - rhs) <= e;
+    return std::fabs(value - rhs) <= e;
   }
 
   /** Not equal than comparison between this and `rhs`.
@@ -1959,9 +1958,9 @@ bool operator !=(double lhs, const Quantity<U> & rhs)
 
 /** Virtual quantity.
 
-   A virtual quantity is a pair compounded by a double and an
+   A virtual quantity is a std::pair compounded by a double and an
    unit. The difference with Quantity type is that a VtlQuantity knows
-   its unit in run time.
+   its unit at runtime.
 
    @author Leandro Rabindranath Leon
    @ingroup Units
@@ -1980,7 +1979,7 @@ public:
 	unit_ptr != nullptr)
       return *unit_ptr;
 
-    ostringstream s;
+    std::ostringstream s;
     s << "There is no product compund unit between " << unit1.name << " and "
       << unit2.name;
     ALEPHTHROW(CompoundUnitNotFound, s.str());
@@ -1995,7 +1994,7 @@ public:
 	unit_ptr != nullptr)
       return *unit_ptr;
 
-    ostringstream s;
+    std::ostringstream s;
     s << "There is no ratio compund unit between " << unit1.name << " and "
       << unit2.name;
     ALEPHTHROW(CompoundUnitNotFound, s.str());
@@ -2014,27 +2013,27 @@ public:
 private:
   // Helper functions for searching
 
-  static const Unit &unit_given_name(const string & name)
+  static const Unit &unit_given_name(const std::string & name)
   {
     if (const auto ptr = Unit::search_by_name(name); ptr != nullptr)
       return *ptr;
 
-    ostringstream s;
+    std::ostringstream s;
     s << "Nonexistent unit name " << name;
     ALEPHTHROW(UnitNotFound, s.str());
   }
 
-  static const Unit &unit_given_symbol(const string & symbol)
+  static const Unit &unit_given_symbol(const std::string & symbol)
   {
     if (const auto ptr = Unit::search_by_symbol(symbol); ptr != nullptr)
       return *ptr;
 
-    ostringstream s;
+    std::ostringstream s;
     s << "Nonexistent unit symbol " << symbol;
     ALEPHTHROW(UnitNotFound, s.str());
   }
 
-  static const Unit &unit_given_name_or_symbol(const string & str)
+  static const Unit &unit_given_name_or_symbol(const std::string & str)
   {
     auto ptr = Unit::search_by_name(str);
     if (ptr != nullptr)
@@ -2044,7 +2043,7 @@ private:
     if (ptr != nullptr)
       return *ptr;
 
-    ostringstream s;
+    std::ostringstream s;
     s << "Nonexistent unit name or symbol " << str;
     ALEPHTHROW(UnitNotFound, s.str());
   }
@@ -2075,7 +2074,7 @@ public:
 
   /// Creates a new VtlQuantity whose unit corresponds to symbol or
   /// name `unit_str` and value `val`
-  VtlQuantity(const string & unit_str, double val = 0)
+  VtlQuantity(const std::string & unit_str, double val = 0)
     : BaseQuantity(unit_given_name_or_symbol(unit_str), val)
   {
     check_value();
@@ -2106,7 +2105,7 @@ public:
 
   /// Create a VtlQuantity copy of quantity `q` with unit
   /// corresponding to unit name or symbol `unit_str`
-  VtlQuantity(const string & unit_str, const BaseQuantity & q)
+  VtlQuantity(const std::string & unit_str, const BaseQuantity & q)
     : BaseQuantity(unit_given_name_or_symbol(unit_str), q.get_value())
   {
     if (&unit == &q.unit)
@@ -2133,7 +2132,7 @@ public:
   VtlQuantity &operator =(const double val)
   {
     if (this->is_null())
-      ALEPHTHROW(UnitNotFound, "Assign of " + ::to_string(val) +
+      ALEPHTHROW(UnitNotFound, "Assign of " + std::to_string(val) +
                " to a null unit");
     value = val;
     check_value();
@@ -2331,14 +2330,14 @@ public:
   [[nodiscard]] bool is_near(const VtlQuantity & rhs, double e) const
   {
     if (&unit == &rhs.unit)
-      return fabs(value - rhs.value) <= e;
-    return fabs(value - build_tmp(rhs).get_value()) <= e;
+      return std::fabs(value - rhs.value) <= e;
+    return std::fabs(value - build_tmp(rhs).get_value()) <= e;
   }
 
   /// Return `true` if this value differs from `rhs` less than `e`.
   [[nodiscard]] bool is_near(double rhs, double e) const
   {
-    return fabs(value - rhs) <= e;
+    return std::fabs(value - rhs) <= e;
   }
 
   /// Not equal comparison between `this` and `rhs`
@@ -2655,10 +2654,10 @@ Quantity<UnitName>::operator /(const VtlQuantity & rhs) const
     - `second` contains human-readable messages for missing conversions.
     @ingroup Units
  */
-inline pair<bool, DynList<string>>
+inline std::pair<bool, DynList<std::string>>
 check_conversions(const PhysicalQuantity & pq)
 {
-  DynList<string> missing;
+  DynList<std::string> missing;
   auto units = Unit::units(pq);
   for (auto it1 = units.get_it(); it1.has_curr(); it1.next())
     {
@@ -2670,7 +2669,7 @@ check_conversions(const PhysicalQuantity & pq)
             continue;
           if (not exist_conversion(*src_unit, *tgt_unit))
             {
-              ostringstream s;
+              std::ostringstream s;
               s << "Missing conversion from " << src_unit->name << "("
                   << src_unit->symbol << ") to " << tgt_unit->name << "("
                   << tgt_unit->symbol << ")";
@@ -2679,7 +2678,7 @@ check_conversions(const PhysicalQuantity & pq)
         }
     }
 
-  return make_pair(missing.is_empty(), move(missing));
+  return std::make_pair(missing.is_empty(), std::move(missing));
 }
 
 /** Return the value immediately superior, according to the floating

@@ -48,10 +48,10 @@ TEST(Table, operations)
   EXPECT_NO_THROW(tbl.register_item(&u1));
   EXPECT_NO_THROW(tbl.register_item(&u2));
 
-  EXPECT_THROW(tbl.register_item(&u1), domain_error);
-  EXPECT_THROW(tbl.register_item(&u2), domain_error);
-  EXPECT_THROW(tbl.register_item(&repeated_uname), domain_error);
-  EXPECT_THROW(tbl.register_item(&repeated_symbol), domain_error);
+  EXPECT_THROW(tbl.register_item(&u1), std::domain_error);
+  EXPECT_THROW(tbl.register_item(&u2), std::domain_error);
+  EXPECT_THROW(tbl.register_item(&repeated_uname), std::domain_error);
+  EXPECT_THROW(tbl.register_item(&repeated_symbol), std::domain_error);
 
   EXPECT_TRUE(tbl.exists_name("Unit1"));
   EXPECT_TRUE(tbl.exists_name("Unit2"));
@@ -69,14 +69,14 @@ TEST(Table, operations)
 
   EXPECT_EQ(tbl.size(), 2);
 
-  EXPECT_THROW(tbl.validate(&u1, "Unit1"), domain_error);
-  EXPECT_THROW(tbl.validate(&u1, "Unit2"), domain_error);
-  EXPECT_THROW(tbl.validate(&u1, "u1"), domain_error);
-  EXPECT_THROW(tbl.validate(&u1, "u2"), domain_error);
+  EXPECT_THROW(tbl.validate(&u1, "Unit1"), std::domain_error);
+  EXPECT_THROW(tbl.validate(&u1, "Unit2"), std::domain_error);
+  EXPECT_THROW(tbl.validate(&u1, "u1"), std::domain_error);
+  EXPECT_THROW(tbl.validate(&u1, "u2"), std::domain_error);
 
   EXPECT_TRUE(eq(tbl.items(), build_dynlist<const UnitItem*>(&u1, &u2)));
-  EXPECT_TRUE(eq(tbl.names(), build_dynlist<string>("Unit1", "Unit2")));
-  EXPECT_TRUE(eq(tbl.symbols(), build_dynlist<string>("u1", "u2")));
+  EXPECT_TRUE(eq(tbl.names(), build_dynlist<std::string>("Unit1", "Unit2")));
+  EXPECT_TRUE(eq(tbl.symbols(), build_dynlist<std::string>("u1", "u2")));
 }
 
 

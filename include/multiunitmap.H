@@ -26,13 +26,13 @@
 # ifndef MULTIUNITMAP_H
 # define MULTIUNITMAP_H
 
+# include <string>
 # include <tuple>
 # include <initializer_list>
 # include <ahSort.H>
 # include <ahFunctional.H>
 # include <tpl_dynMapTree.H>
 
-using namespace std;
 
 class Unit;
 
@@ -46,11 +46,11 @@ class CompoundUnitTbl
 {
   struct Key
   {
-    CompoundUnitOp op = CompoundUnitOp::Product;
-    DynList<string> names;
+    CompoundUnitOp op;
+    DynList<std::string> names;
 
-    Key() = default;
-    Key(CompoundUnitOp o, const DynList<string> & n) : op(o), names(n) {}
+    Key() noexcept : op(CompoundUnitOp::Product), names() {}
+    Key(CompoundUnitOp o, const DynList<std::string> & n) : op(o), names(n) {}
   };
 
   struct Cmp
@@ -82,33 +82,33 @@ class CompoundUnitTbl
 
 public:
 
-  const Unit * search_product(const DynList<string> & names)
+  const Unit * search_product(const DynList<std::string> & names)
   {
     return search({CompoundUnitOp::Product, names});
   }
 
-  const Unit * search_ratio(const DynList<string> & names)
+  const Unit * search_ratio(const DynList<std::string> & names)
   {
     return search({CompoundUnitOp::Ratio, names});
   }
 
-  bool insert_product(const DynList<string> & names, const Unit & unit)
+  bool insert_product(const DynList<std::string> & names, const Unit & unit)
   {
     return insert({CompoundUnitOp::Product, names}, unit);
   }
 
-  bool insert_ratio(const DynList<string> & names, const Unit & unit)
+  bool insert_ratio(const DynList<std::string> & names, const Unit & unit)
   {
     return insert({CompoundUnitOp::Ratio, names}, unit);
   }
 
-  DynList<pair<DynList<string>, string>> items()
+  DynList<std::pair<DynList<std::string>, std::string>> items()
   {
-    using T = pair<DynList<string>, string>;
+    using T = std::pair<DynList<std::string>, std::string>;
 
-    return tbl.items_ptr().maps<T>([] (pair<Key, const Unit*> * p)
+    return tbl.items_ptr().maps<T>([] (std::pair<Key, const Unit*> * p)
       {
-	return make_pair(p->first.names, p->second->name);
+	return std::make_pair(p->first.names, p->second->name);
       });
   }
 };

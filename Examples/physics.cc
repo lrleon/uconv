@@ -6,17 +6,16 @@
 
 UnitsInstancer init;
 
-using namespace std;
 
 int main() {
-    cout << "=== Ejemplo 3: Cálculos Físicos ===" << endl;
+    std::cout << "=== Ejemplo 3: Cálculos Físicos ===" << std::endl;
 
     // Definir velocidad y tiempo
     Quantity<Meter_S> velocidad = 25.0; // 25 m/s
     Quantity<second> tiempo = 10.0;     // 10 segundos
 
-    cout << "Velocidad: " << velocidad << endl;
-    cout << "Tiempo: " << tiempo << endl;
+    std::cout << "Velocidad: " << velocidad << std::endl;
+    std::cout << "Tiempo: " << tiempo << std::endl;
 
     // Calcular distancia
     // Como no hemos definido explícitamente la unidad compuesta (m/s * s = m),
@@ -24,11 +23,11 @@ int main() {
     double distancia_val = velocidad.raw() * tiempo.raw();
     Quantity<meter> distancia = distancia_val;
 
-    cout << "Distancia recorrida: " << distancia << endl;
+    std::cout << "Distancia recorrida: " << distancia << std::endl;
 
     // Conversión a otras unidades de longitud
-    cout << "En pies: " << Quantity<foot>(distancia) << endl;
-    cout << "En yardas: " << Quantity<yard>(distancia) << endl;
+    std::cout << "En pies: " << Quantity<foot>(distancia) << std::endl;
+    std::cout << "En yardas: " << Quantity<yard>(distancia) << std::endl;
 
     return 0;
 }

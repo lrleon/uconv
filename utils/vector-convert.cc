@@ -49,17 +49,17 @@
 
 using namespace TCLAP;
 
-CmdLine cmd = { "vector-conversion", ' ', "0" };
+CmdLine cmd = { "std::vector-conversion", ' ', "0" };
 
-ValueArg<string> source = {"S", "source-unit", "source unit", true,
+ValueArg<std::string> source = {"S", "source-unit", "source unit", true,
 			   "", "source unit", cmd};
-ValueArg<string> target = {"T", "target-unit", "target unit", true,
+ValueArg<std::string> target = {"T", "target-unit", "target unit", true,
 			   "", "target unit", cmd};
 
 UnlabeledMultiArg<double> vals = { "values", "list of values to convert", true,
 				   "list of values to convert", cmd };
 
-const Unit * search_unit(const string & name)
+const Unit * search_unit(const std::string & name)
 {
   auto unit_ptr = Unit::search_by_name(name);
   if (unit_ptr == nullptr)
@@ -67,7 +67,7 @@ const Unit * search_unit(const string & name)
       unit_ptr = Unit::search_by_symbol(name);
       if (unit_ptr == nullptr)
 	{
-	  cout << "Unit " << name << " not found" << endl;
+	  std::cout << "Unit " << name << " not found" << std::endl;
 	  abort();
 	}
     }
@@ -81,8 +81,8 @@ void convert()
   auto convert_fct = search_conversion(*src_unit, *tgt_unit);
 
   for (auto v : vals)
-    cout << (*convert_fct)(v) << " ";
-  cout << endl;
+    std::cout << (*convert_fct)(v) << " ";
+  std::cout << std::endl;
 }
 
 int main(int argc, char *argv[])

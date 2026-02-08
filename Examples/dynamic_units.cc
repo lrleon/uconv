@@ -5,37 +5,36 @@
 
 UnitsInstancer init;
 
-using namespace std;
 
 int main() {
-    cout << "=== Ejemplo 2: Unidades Dinámicas (VtlQuantity) ===" << endl;
-    cout << "Este ejemplo simula el manejo de unidades seleccionadas por el usuario en tiempo de ejecución." << endl;
+    std::cout << "=== Ejemplo 2: Unidades Dinámicas (VtlQuantity) ===" << std::endl;
+    std::cout << "Este ejemplo simula el manejo de unidades seleccionadas por el usuario en tiempo de ejecución." << std::endl;
 
     try {
         // Supongamos que estos strings vienen de una interfaz de usuario o archivo de config
-        string unidad_entrada = "psia";
+        std::string unidad_entrada = "psia";
         double valor_entrada = 30.0;
 
-        string unidad_salida = "bar";
+        std::string unidad_salida = "bar";
 
         // Crear cantidad dinámicamente
         VtlQuantity presion(unidad_entrada, valor_entrada);
-        cout << "\nEntrada: " << presion << endl;
+        std::cout << "\nEntrada: " << presion << std::endl;
 
         // Convertir dinámicamente
         VtlQuantity resultado(unidad_salida, presion);
-        cout << "Convertido a " << unidad_salida << ": " << resultado << endl;
+        std::cout << "Convertido a " << unidad_salida << ": " << resultado << std::endl;
 
         // Operaciones mixtas
         VtlQuantity extra("Pa", 5000.0);
-        cout << "Sumando " << extra << "..." << endl;
+        std::cout << "Sumando " << extra << "..." << std::endl;
 
         // El resultado mantiene la unidad del operando izquierdo (psi)
         VtlQuantity total = presion + extra;
-        cout << "Total: " << total << endl;
+        std::cout << "Total: " << total << std::endl;
 
-    } catch (const exception& e) {
-        cerr << "Error: " << e.what() << endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 
     return 0;

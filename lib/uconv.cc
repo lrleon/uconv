@@ -43,14 +43,14 @@ UnitItemTable * Unit::tbl = nullptr;
 
 DynSetTree<const Unit *> * Unit::unit_tbl = nullptr;
 
-static size_t fst_unit_pair_hash
-(const pair<pair<const Unit*, const Unit*>, Unit_Convert_Fct_Ptr> & p)
+static std::size_t fst_unit_pair_hash
+(const std::pair<std::pair<const Unit*, const Unit*>, Unit_Convert_Fct_Ptr> & p)
 {
   return dft_hash_fct(p.first);
 }
 
-static size_t snd_unit_pair_hash
-(const pair<pair<const Unit*, const Unit*>, Unit_Convert_Fct_Ptr> & p)
+static std::size_t snd_unit_pair_hash
+(const std::pair<std::pair<const Unit*, const Unit*>, Unit_Convert_Fct_Ptr> & p)
 {
   return snd_hash_fct(p.first);
 }
@@ -62,7 +62,7 @@ const PhysicalQuantity PhysicalQuantity::null_physical_quantity;
 
 const Unit Unit::null_unit;
 
-const double Unit::Invalid_Value = numeric_limits<double>::max();
+const double Unit::Invalid_Value = std::numeric_limits<double>::max();
 
 const VtlQuantity VtlQuantity::null_quantity;
 
@@ -77,7 +77,7 @@ const VtlQuantity VtlQuantity::null_quantity;
 */
 UnitsInstancer::UnitsInstancer()
 {
-  static size_t count = 0;
+  static std::size_t count = 0;
   if (count++ > 0)
     return;
   
@@ -95,17 +95,8 @@ UnitsInstancer::UnitsInstancer()
   static CompoundUnitTbl __compound_unit_tbl;
   ::__compound_unit_tbl = &__compound_unit_tbl;
 
-  new ((void*) &PhysicalQuantity::null_physical_quantity)
-    PhysicalQuantity("NullPhysicalQuantity", "NullPQ",
-		     "Null" "Null Physical Quantity");
-
-  new ((void*) &Unit::null_unit) Unit("NullUnit", "Null Unit", "Null unit", "Null",
-				      PhysicalQuantity::null_physical_quantity,
-				      numeric_limits<double>::min(),
-				      numeric_limits<double>::max());
-
-  new ((void*) &VtlQuantity::null_quantity)
-    VtlQuantity(Unit::null_unit, numeric_limits<double>::max());
+  // Keep default-initialized null sentinels. Reconstructing them via placement-new
+  // here causes LSan-visible leaks in their internal string/list state at shutdown.
 
   // init_unit_converters(); // Removed
 }
@@ -147,7 +138,7 @@ static json to_json(const PhysicalQuantity * const pq)
   return j;
 }
 
-string units_json()
+std::string units_json()
 {
   json j;
   j["uconv_physical_quantities"] =
