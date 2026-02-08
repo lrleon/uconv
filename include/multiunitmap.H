@@ -48,6 +48,9 @@ class CompoundUnitTbl
   {
     CompoundUnitOp op = CompoundUnitOp::Product;
     DynList<string> names;
+
+    Key() = default;
+    Key(CompoundUnitOp o, const DynList<string> & n) : op(o), names(n) {}
   };
 
   struct Cmp
