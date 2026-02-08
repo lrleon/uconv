@@ -24,8 +24,9 @@ A C++20 units and physical-quantities conversion library with:
 12. [DSL Validation Rules](#dsl-validation-rules)
 13. [Documentation (Doxygen)](#documentation-doxygen)
 14. [CI Workflows](#ci-workflows)
-15. [Troubleshooting](#troubleshooting)
-16. [License](#license)
+15. [Exception Style Guide](#exception-style-guide)
+16. [Troubleshooting](#troubleshooting)
+17. [License](#license)
 
 ## Project Status
 
@@ -313,6 +314,22 @@ Current workflows (`.github/workflows/`):
 - `docs.yml`: build and publish Doxygen site to GitHub Pages
 - `full_analysis.yml`: scheduled deeper analysis (build/test/cppcheck/docs)
 - All workflows clone `Aleph-w`, build `libAleph.a`, and export `ALEPHW_DIR` before configuring `uconv`.
+
+## Exception Style Guide
+
+All new exception throws must use macro-based style.
+
+- For standard exceptions (`std::domain_error`, `std::range_error`, etc.):
+  use `ah-errors.H` macros (for example `ah_domain_error_if(...)`, `ah_range_error_unless(...)`).
+- For uconv/Aleph custom exceptions not present in `ah-errors.H`:
+  use `include/ah-uconv-errors.H` macros (for example
+  `ah_unit_not_found_error_if(...)`, `ah_unit_conversion_not_found_error_if(...)`).
+
+Rules:
+
+- Prefer conditional macros (`*_if`, `*_unless`) instead of manual `if (...) throw ...`.
+- Build error messages with stream syntax (`<<`) directly on the macro.
+- Avoid direct `throw ...` in library/runtime code unless there is no macro coverage yet.
 
 ## Troubleshooting
 

@@ -123,6 +123,42 @@ end
 class DSLValidationError < StandardError
 end
 
+def dsl_error_message(message, depth: 1)
+  loc = caller_locations(depth + 1, 1)&.first
+  source = if loc.nil?
+             "unknown:0"
+           else
+             "#{File.basename(loc.path)}:#{loc.lineno}"
+           end
+  "(#{source}) | #{message}"
+end
+
+def dsl_error_if(errors, condition, message = nil, depth: 1, &block)
+  return unless condition
+
+  text = block_given? ? yield : message
+  errors << dsl_error_message(text, depth: depth + 1)
+end
+
+def dsl_error_unless(errors, condition, message = nil, depth: 1, &block)
+  dsl_error_if(errors, !condition, message, depth: depth + 1, &block)
+end
+
+def dsl_error(errors, message = nil, depth: 1, &block)
+  dsl_error_if(errors, true, message, depth: depth + 1, &block)
+end
+
+def dsl_abort_if(condition, message = nil, depth: 1, &block)
+  return unless condition
+
+  text = block_given? ? yield : message
+  abort dsl_error_message(text, depth: depth + 1)
+end
+
+def dsl_abort_unless(condition, message = nil, depth: 1, &block)
+  dsl_abort_if(!condition, message, depth: depth + 1, &block)
+end
+
 def blank?(value)
   value.nil? || value.to_s.strip.empty?
 end
@@ -137,37 +173,40 @@ def add_duplicates(errors, elements, label)
                        .select { |k, group| !blank?(k) && group.size > 1 }
   duplicates.each do |value, group|
     refs = group.map { |item| element_ref(item) }.join(", ")
-    errors << "Duplicated #{label} `#{value}` in #{refs}"
+    dsl_error(errors, "Duplicated #{label} `#{value}` in #{refs}")
   end
 end
 
 def validate_presence!(dsl, errors)
   dsl.quantities.each do |pq|
-    errors << "Missing symbol for #{element_ref(pq)}" if blank?(pq.symbol)
-    errors << "Missing latex for #{element_ref(pq)}" if blank?(pq.latex)
-    errors << "Missing description for #{element_ref(pq)}" if blank?(pq.description)
+    dsl_error_if(errors, blank?(pq.symbol), "Missing symbol for #{element_ref(pq)}")
+    dsl_error_if(errors, blank?(pq.latex), "Missing latex for #{element_ref(pq)}")
+    dsl_error_if(errors, blank?(pq.description), "Missing description for #{element_ref(pq)}")
   end
 
   dsl.units.each do |unit|
-    errors << "Missing symbol for #{element_ref(unit)}" if blank?(unit.symbol)
-    errors << "Missing latex for #{element_ref(unit)}" if blank?(unit.latex)
-    errors << "Missing description for #{element_ref(unit)}" if blank?(unit.description)
-    errors << "Missing quantity reference for #{element_ref(unit)}" if blank?(unit.quantity)
-    errors << "Missing range for #{element_ref(unit)}" unless unit.range_defined
+    dsl_error_if(errors, blank?(unit.symbol), "Missing symbol for #{element_ref(unit)}")
+    dsl_error_if(errors, blank?(unit.latex), "Missing latex for #{element_ref(unit)}")
+    dsl_error_if(errors, blank?(unit.description), "Missing description for #{element_ref(unit)}")
+    dsl_error_if(errors, blank?(unit.quantity), "Missing quantity reference for #{element_ref(unit)}")
+    dsl_error_unless(errors, unit.range_defined, "Missing range for #{element_ref(unit)}")
 
     unless unit.min.is_a?(Numeric) && unit.max.is_a?(Numeric)
-      errors << "Range values must be numeric for #{element_ref(unit)}"
+      dsl_error(errors, "Range values must be numeric for #{element_ref(unit)}")
       next
     end
 
-    errors << "Invalid range (min > max) for #{element_ref(unit)}" if unit.min > unit.max
+    dsl_error_if(errors, unit.min > unit.max,
+                 "Invalid range (min > max) for #{element_ref(unit)}")
   end
 
   dsl.conversions.each do |conv|
-    errors << "Missing source unit in #{element_ref(conv)}" if blank?(conv.from)
-    errors << "Missing target unit in #{element_ref(conv)}" if blank?(conv.to)
-    errors << "Missing conversion formula block in #{element_ref(conv)}" if conv.formula.nil?
-    errors << "Explicit self-conversion is not allowed in #{element_ref(conv)}" if conv.from == conv.to
+    dsl_error_if(errors, blank?(conv.from), "Missing source unit in #{element_ref(conv)}")
+    dsl_error_if(errors, blank?(conv.to), "Missing target unit in #{element_ref(conv)}")
+    dsl_error_if(errors, conv.formula.nil?,
+                 "Missing conversion formula block in #{element_ref(conv)}")
+    dsl_error_if(errors, conv.from == conv.to,
+                 "Explicit self-conversion is not allowed in #{element_ref(conv)}")
   end
 end
 
@@ -182,7 +221,7 @@ def validate_duplicates!(dsl, errors)
   unit_names = dsl.units.map(&:name).to_set
   overlaps = pq_names & unit_names
   overlaps.each do |name|
-    errors << "Type name collision: `#{name}` is both a physical quantity and a unit"
+    dsl_error(errors, "Type name collision: `#{name}` is both a physical quantity and a unit")
   end
 end
 
@@ -194,20 +233,22 @@ def validate_references!(dsl, errors)
     next if blank?(unit.quantity)
     next if quantities_by_name.key?(unit.quantity)
 
-    errors << "Unknown physical quantity `#{unit.quantity}` in #{element_ref(unit)}"
+    dsl_error(errors, "Unknown physical quantity `#{unit.quantity}` in #{element_ref(unit)}")
   end
 
   dsl.conversions.each do |conv|
     from_unit = units_by_name[conv.from]
     to_unit = units_by_name[conv.to]
 
-    errors << "Unknown source unit `#{conv.from}` in #{element_ref(conv)}" if from_unit.nil?
-    errors << "Unknown target unit `#{conv.to}` in #{element_ref(conv)}" if to_unit.nil?
+    dsl_error_if(errors, from_unit.nil?,
+                 "Unknown source unit `#{conv.from}` in #{element_ref(conv)}")
+    dsl_error_if(errors, to_unit.nil?,
+                 "Unknown target unit `#{conv.to}` in #{element_ref(conv)}")
     next if from_unit.nil? || to_unit.nil?
 
     if from_unit.quantity != to_unit.quantity
-      errors << "Cross-quantity conversion `#{conv.from}->#{conv.to}` "\
-                "is invalid (#{from_unit.quantity} != #{to_unit.quantity})"
+      dsl_error(errors, "Cross-quantity conversion `#{conv.from}->#{conv.to}` "\
+                        "is invalid (#{from_unit.quantity} != #{to_unit.quantity})")
     end
   end
 end
@@ -227,8 +268,8 @@ def validate_conversion_coverage!(dsl, errors)
         next if src == tgt
         next if conversion_pairs.include?([src, tgt])
 
-        errors << "Missing conversion coverage for quantity `#{quantity_name}`: "\
-                  "`#{src} -> #{tgt}`"
+        dsl_error(errors, "Missing conversion coverage for quantity `#{quantity_name}`: "\
+                          "`#{src} -> #{tgt}`")
       end
     end
   end
@@ -418,10 +459,7 @@ MD
 
 # --- Main Execution ---
 
-if ARGV.length < 2
-  puts "Usage: gen-units <dsl_file> <output_dir>"
-  exit 1
-end
+dsl_abort_unless(ARGV.length >= 2, "Usage: gen-units <dsl_file> <output_dir>")
 
 dsl_file = ARGV[0]
 output_dir = ARGV[1]
@@ -437,13 +475,13 @@ dsl = DSL.new(project_root)
 begin
   dsl.import(dsl_file)
 rescue StandardError => e
-  abort "Error parsing DSL: #{e.message}\n#{e.backtrace.join("\n")}"
+  dsl_abort_if(true, "Error parsing DSL: #{e.message}\n#{e.backtrace.join("\n")}")
 end
 
 begin
   validate_dsl!(dsl)
 rescue DSLValidationError => e
-  abort e.message
+  dsl_abort_if(true, e.message)
 end
 
 # Group by source file

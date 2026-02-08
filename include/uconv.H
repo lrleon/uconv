@@ -57,6 +57,7 @@
 
 # include "unititem.H"
 # include "unit-exceptions.H"
+# include "ah-uconv-errors.H"
 
 
 /// Sentinel value used for invalid/null quantities.
@@ -228,12 +229,8 @@ class Unit : public UnitItem
 public:
   static void validate_ratio(const double ratio)
   {
-    if (not (ratio <= 0 or ratio > 0.3))
-      return;
-
-    std::ostringstream s;
-    s << "epsilon ratio " << ratio << " is not inside (0, " << ratio << ")";
-    ALEPHTHROW(WrongUnitRatio, s.str());
+    ah_wrong_unit_ratio_error_if(ratio <= 0 or ratio > 0.3)
+      << "epsilon ratio " << ratio << " is not inside (0, " << ratio << ")";
   }
 
   static const Unit null_unit; /// Indicates the null unit
@@ -394,13 +391,9 @@ protected:
     : UnitItem(name, symbol, latex_symbol, desc), physical_quantity(phy_q),
       min_val(min), max_val(max)
   {
-    if (min_val > max_val)
-      {
-        std::ostringstream s;
-        s << "Unit constructor: minimum value " << min_val
-            << " is greater than maximum value " << max_val;
-        ALEPHTHROW(MinMaxReversed, s.str());
-      }
+    ah_min_max_reversed_error_if(min_val > max_val)
+      << "Unit constructor: minimum value " << min_val
+      << " is greater than maximum value " << max_val;
 
     set_epsilon(epsilon_ratio);
 
@@ -748,13 +741,9 @@ inline double unit_convert(const Unit & src_unit,
                            const Unit & tgt_unit)
 {
   const auto fct = search_conversion(src_unit, tgt_unit);
-  if (fct == nullptr)
-    {
-      std::ostringstream s;
-      s << "Conversion from unit name " << src_unit.name << " to unit name "
-          << tgt_unit.name << " has not been registered";
-      ALEPHTHROW(UnitConversionNotFound, s.str());
-    }
+  ah_unit_conversion_not_found_error_if(fct == nullptr)
+    << "Conversion from unit name " << src_unit.name << " to unit name "
+    << tgt_unit.name << " has not been registered";
 
   return (*fct)(val);
 }
@@ -783,13 +772,9 @@ unit_convert(const Unit & src_unit, const C & c, const Unit & tgt_unit)
     return c;
 
   const auto fct = search_conversion(src_unit, tgt_unit);
-  if (fct == nullptr)
-    {
-      std::ostringstream s;
-      s << "Conversion from unit name " << src_unit.name << " to unit name "
-          << tgt_unit.name << " has not been registered";
-      ALEPHTHROW(UnitConversionNotFound, s.str());
-    }
+  ah_unit_conversion_not_found_error_if(fct == nullptr)
+    << "Conversion from unit name " << src_unit.name << " to unit name "
+    << tgt_unit.name << " has not been registered";
 
   C ret;
   for (auto it = c.get_it(); it.has_curr(); it.next())
@@ -821,13 +806,9 @@ mutable_unit_convert(const Unit & src_unit, C & c, const Unit & tgt_unit)
     return;
 
   auto fct = search_conversion(src_unit, tgt_unit);
-  if (fct == nullptr)
-    {
-      std::ostringstream s;
-      s << "Conversion from unit name " << src_unit.name << " to unit name "
-          << tgt_unit.name << " has not been registered";
-      ALEPHTHROW(UnitConversionNotFound, s.str());
-    }
+  ah_unit_conversion_not_found_error_if(fct == nullptr)
+    << "Conversion from unit name " << src_unit.name << " to unit name "
+    << tgt_unit.name << " has not been registered";
 
   c.mutable_for_each([fct](double & v) { v = (*fct)(v); });
 }
@@ -846,21 +827,17 @@ inline double unit_convert_name_to_name(const std::string & src_name,
                                         const std::string & tgt_name)
 {
   const auto src_unit_ptr = Unit::search_by_name(src_name);
-  if (src_unit_ptr == nullptr)
-    ALEPHTHROW(UnitNotFound, "unit name " + src_name + " not found");
+  ah_unit_not_found_error_if(src_unit_ptr == nullptr)
+    << "unit name " << src_name << " not found";
 
   const auto tgt_unit_ptr = Unit::search_by_name(tgt_name);
-  if (tgt_unit_ptr == nullptr)
-    ALEPHTHROW(UnitNotFound, "unit name " + tgt_name + " not found");
+  ah_unit_not_found_error_if(tgt_unit_ptr == nullptr)
+    << "unit name " << tgt_name << " not found";
 
   const auto fct = search_conversion(*src_unit_ptr, *tgt_unit_ptr);
-  if (fct == nullptr)
-    {
-      std::ostringstream s;
-      s << "Conversion from unit name " << src_name << " to unit name "
-          << tgt_name << " has not been registered";
-      ALEPHTHROW(UnitConversionNotFound, s.str());
-    }
+  ah_unit_conversion_not_found_error_if(fct == nullptr)
+    << "Conversion from unit name " << src_name << " to unit name "
+    << tgt_name << " has not been registered";
 
   return (*fct)(val);
 }
@@ -879,21 +856,17 @@ inline double unit_convert_symbol_to_symbol(const std::string & src_symbol,
                                             const std::string & tgt_symbol)
 {
   const auto src_unit_ptr = Unit::search_by_symbol(src_symbol);
-  if (src_unit_ptr == nullptr)
-    ALEPHTHROW(UnitNotFound, "unit symbol " + src_symbol + " not found");
+  ah_unit_not_found_error_if(src_unit_ptr == nullptr)
+    << "unit symbol " << src_symbol << " not found";
 
   const auto tgt_unit_ptr = Unit::search_by_symbol(tgt_symbol);
-  if (tgt_unit_ptr == nullptr)
-    ALEPHTHROW(UnitNotFound, "unit symbol " + tgt_symbol + " not found");
+  ah_unit_not_found_error_if(tgt_unit_ptr == nullptr)
+    << "unit symbol " << tgt_symbol << " not found";
 
   auto fct = search_conversion(*src_unit_ptr, *tgt_unit_ptr);
-  if (fct == nullptr)
-    {
-      std::ostringstream s;
-      s << "Conversion from unit symbol " << src_symbol << " to unit symbol "
-          << tgt_symbol << " has not been registered";
-      ALEPHTHROW(UnitConversionNotFound, s.str());
-    }
+  ah_unit_conversion_not_found_error_if(fct == nullptr)
+    << "Conversion from unit symbol " << src_symbol << " to unit symbol "
+    << tgt_symbol << " has not been registered";
 
   return (*fct)(val);
 }
@@ -1141,38 +1114,27 @@ protected:
   /// throws std::range_error if the value is not in the interval
   void check_value() const
   {
-    if (is_valid(value, unit))
-      return;
-
-    std::ostringstream s;
-    s << "Value (" << value << " " << unit.name
-        << ") is not inside in [" << unit.min_val << ", "
-        << unit.max_val << "] epsilon = " << unit.get_epsilon()
-        << " defined for the unit";
-    ALEPHTHROW(OutOfUnitRange, s.str());
+    ah_out_of_unit_range_error_unless(is_valid(value, unit))
+      << "Value (" << value << " " << unit.name
+      << ") is not inside in [" << unit.min_val << ", "
+      << unit.max_val << "] epsilon = " << unit.get_epsilon()
+      << " defined for the unit";
   }
 
   /// throw exception if the unit does not share the same physical quantity
   void check_physical_units(const BaseQuantity & q) const
   {
-    if ((void *) &unit.physical_quantity == (void *) &(q.unit.physical_quantity))
-      return;
-
-    std::ostringstream s;
-    s << "Unit does not refer to the same physical quantity" << std::endl
-        << "Source physical quantity = " << unit.physical_quantity.name << std::endl
-        << "target physical quantity = " << q.unit.physical_quantity.name;
-    ALEPHTHROW(WrongSiblingUnit, s.str());
+    ah_wrong_sibling_unit_error_if((void *) &unit.physical_quantity !=
+                                   (void *) &(q.unit.physical_quantity))
+      << "Unit does not refer to the same physical quantity" << std::endl
+      << "Source physical quantity = " << unit.physical_quantity.name << std::endl
+      << "target physical quantity = " << q.unit.physical_quantity.name;
   }
 
   void verify_same_unit(const Unit & __unit) const
   {
-    if (&this->unit == &__unit)
-      return;
-
-    std::ostringstream s;
-    s << "Different units: " << unit.name << " != " << __unit.name;
-    ALEPHTHROW(DifferentUnits, s.str());
+    ah_different_units_error_if(&this->unit != &__unit)
+      << "Different units: " << unit.name << " != " << __unit.name;
   }
 
 public:
@@ -1993,10 +1955,9 @@ public:
 	unit_ptr != nullptr)
       return *unit_ptr;
 
-    std::ostringstream s;
-    s << "There is no product compund unit between " << unit1.name << " and "
+    ah_compound_unit_not_found_error()
+      << "There is no product compund unit between " << unit1.name << " and "
       << unit2.name;
-    ALEPHTHROW(CompoundUnitNotFound, s.str());
   }
 
   /// return the ratio compound unit corresponding to unit1 / unit2
@@ -2008,10 +1969,9 @@ public:
 	unit_ptr != nullptr)
       return *unit_ptr;
 
-    std::ostringstream s;
-    s << "There is no ratio compund unit between " << unit1.name << " and "
+    ah_compound_unit_not_found_error()
+      << "There is no ratio compund unit between " << unit1.name << " and "
       << unit2.name;
-    ALEPHTHROW(CompoundUnitNotFound, s.str());
   }
 
   /** Legacy alias of `verify_product_compound()`.
@@ -2032,9 +1992,7 @@ private:
     if (const auto ptr = Unit::search_by_name(name); ptr != nullptr)
       return *ptr;
 
-    std::ostringstream s;
-    s << "Nonexistent unit name " << name;
-    ALEPHTHROW(UnitNotFound, s.str());
+    ah_unit_not_found_error() << "Nonexistent unit name " << name;
   }
 
   static const Unit &unit_given_symbol(const std::string & symbol)
@@ -2042,9 +2000,7 @@ private:
     if (const auto ptr = Unit::search_by_symbol(symbol); ptr != nullptr)
       return *ptr;
 
-    std::ostringstream s;
-    s << "Nonexistent unit symbol " << symbol;
-    ALEPHTHROW(UnitNotFound, s.str());
+    ah_unit_not_found_error() << "Nonexistent unit symbol " << symbol;
   }
 
   static const Unit &unit_given_name_or_symbol(const std::string & str)
@@ -2057,9 +2013,7 @@ private:
     if (ptr != nullptr)
       return *ptr;
 
-    std::ostringstream s;
-    s << "Nonexistent unit name or symbol " << str;
-    ALEPHTHROW(UnitNotFound, s.str());
+    ah_unit_not_found_error() << "Nonexistent unit name or symbol " << str;
   }
 
   VtlQuantity(NoExceptionCtor, const Unit & unit, double val)
@@ -2145,9 +2099,8 @@ public:
   /// Assign to `this` the double `val`
   VtlQuantity &operator =(const double val)
   {
-    if (this->is_null())
-      ALEPHTHROW(UnitNotFound, "Assign of " + std::to_string(val) +
-               " to a null unit");
+    ah_unit_not_found_error_if(this->is_null())
+      << "Assign of " << val << " to a null unit";
     value = val;
     check_value();
 
@@ -2596,8 +2549,7 @@ Quantity<UnitName> &Quantity<UnitName>::operator =(const VtlQuantity & q)
     }
 
   if (q.is_null())
-    ALEPHTHROW(InvalidConversion,
-             "Intent of assigning a Null Unit to a Quantity");
+    ah_invalid_conversion_error() << "Intent of assigning a Null Unit to a Quantity";
 
   value = unit_convert(q.unit, q.get_value(), unit);
   check_value();

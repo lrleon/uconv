@@ -51,11 +51,13 @@
 # include <tclap/CmdLine.h>
 
 # include <ahFunctional.H>
+# include <ah-errors.H>
 # include <ah-string-utils.H>
 # include <ah-stl-utils.H>
 # include <htlist.H>
 
 # include <uconv-list.H>
+# include <ah-uconv-errors.H>
 
 using namespace TCLAP;
 using namespace Aleph;
@@ -111,17 +113,13 @@ generate_row(const Unit & unit, double val, double epsilon, bool verbose)
       if (verbose)
 	std::cout << "        done = " << inv << std::endl
 	     << std::endl;
-      if (std::abs(q.get_value() - inv.get_value()) > epsilon)
-	{
-	  std::ostringstream s;
-	  s << "Conversion for value " << val << " from unit "
-	    << unit.name << " to unit " << unit_ptr->name
-	    << " does not satisfy epsilon threshold " << epsilon << std::endl
-	    << "Original value     = " << q << std::endl
-	    << "Intermediate value = " << conv << std::endl
-	    << "Returned value = " << inv << std::endl;
-	  throw std::range_error(s.str());
-	}
+      ah_range_error_if(std::abs(q.get_value() - inv.get_value()) > epsilon)
+	<< "Conversion for value " << val << " from unit "
+	<< unit.name << " to unit " << unit_ptr->name
+	<< " does not satisfy epsilon threshold " << epsilon << std::endl
+	<< "Original value     = " << q << std::endl
+	<< "Intermediate value = " << conv << std::endl
+	<< "Returned value = " << inv << std::endl;
 
       conversions.append(to_string(conv.get_value(), precision));
     }
@@ -271,8 +269,8 @@ struct Epsilon
   Epsilon & operator = (const std::string & str)
   {
     std::istringstream iss(str);
-    if (not (iss >> symbol >> epsilon))
-      throw TCLAP::ArgParseException(str + " is not a pair unit-symbol epsilon");
+    ah_tclap_arg_parse_error_unless(iss >> symbol >> epsilon)
+      << str << " is not a pair unit-symbol epsilon";
 
     return *this;
   }

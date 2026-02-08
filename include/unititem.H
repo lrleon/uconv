@@ -42,6 +42,7 @@
 # include <iostream>
 # include <stdexcept>
 
+# include <ah-errors.H>
 # include <ah-string-utils.H>
 # include <tpl_dynMapTree.H>
 
@@ -179,19 +180,11 @@ public:
    */
   void register_item(const UnitItem * ptr)
   {
-    if (name_tbl.contains(ptr->name))
-      {
-	std::ostringstream s;
-	s << " name " << ptr->name << " already exist";
-	throw std::domain_error(s.str());
-      }
+    ah_domain_error_if(name_tbl.contains(ptr->name))
+      << " name " << ptr->name << " already exist";
 
-    if (symbol_tbl.contains(ptr->symbol))
-      {
-	std::ostringstream s;
-	s << "unit symbol " << ptr->symbol << " already exist";
-	throw std::domain_error(s.str());
-      }
+    ah_domain_error_if(symbol_tbl.contains(ptr->symbol))
+      << "unit symbol " << ptr->symbol << " already exist";
     
     name_tbl.insert(ptr->name, ptr);
     symbol_tbl.insert(ptr->symbol, ptr);
@@ -235,22 +228,14 @@ public:
   {
     {
       const std::string & name = ptr->name;
-      if (exists_name(str))
-	{
-	  std::ostringstream s;
-	  s << "Repeated " << str << " name " << name;
-	  throw std::domain_error(s.str());
-	}
+      ah_domain_error_if(exists_name(str))
+	<< "Repeated " << str << " name " << name;
     }
 
     {
       const std::string & symbol = ptr->symbol;
-      if (exists_symbol(str))
-	{
-	  std::ostringstream s;
-	  s << "Repeated " << str << " symbol " << symbol;
-	  throw std::domain_error(s.str());
-	}
+      ah_domain_error_if(exists_symbol(str))
+	<< "Repeated " << str << " symbol " << symbol;
     }
   }
 };
