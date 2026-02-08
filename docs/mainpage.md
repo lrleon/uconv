@@ -13,6 +13,7 @@ Welcome to the technical documentation for `uconv`.
 - [Architecture Overview](architecture.md)
 - [DSL Reference](dsl-reference.md)
 - [Adding New Units](adding-units.md)
+- Auto-generated units catalog: @ref units_catalog
 
 ## Documentation Generation
 

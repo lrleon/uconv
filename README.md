@@ -14,16 +14,17 @@ A C++20 units and physical-quantities conversion library with:
 2. [Repository Layout](#repository-layout)
 3. [Requirements](#requirements)
 4. [Quick Start](#quick-start)
-5. [Build Targets](#build-targets)
-6. [Running Tests](#running-tests)
-7. [Running Utilities](#running-utilities)
-8. [Examples](#examples)
-9. [Defining New Units and Conversions](#defining-new-units-and-conversions)
-10. [DSL Validation Rules](#dsl-validation-rules)
-11. [Documentation (Doxygen)](#documentation-doxygen)
-12. [CI Workflows](#ci-workflows)
-13. [Troubleshooting](#troubleshooting)
-14. [License](#license)
+5. [Consuming the Library](#consuming-the-library)
+6. [Build Targets](#build-targets)
+7. [Running Tests](#running-tests)
+8. [Running Utilities](#running-utilities)
+9. [Examples](#examples)
+10. [Defining New Units and Conversions](#defining-new-units-and-conversions)
+11. [DSL Validation Rules](#dsl-validation-rules)
+12. [Documentation (Doxygen)](#documentation-doxygen)
+13. [CI Workflows](#ci-workflows)
+14. [Troubleshooting](#troubleshooting)
+15. [License](#license)
 
 ## Project Status
 
@@ -95,6 +96,56 @@ cmake --build cmake-build-debug -j
 ```
 
 This build automatically regenerates `<build-dir>/generated/units/*.H` from the DSL when needed.
+
+## Consuming the Library
+
+### CMake consumer (recommended)
+
+Link against target `uconv` and include:
+
+```cpp
+#include <uconv-list.H>
+```
+
+`uconv-list.H` includes generated `all_units.H` automatically.
+When you link `uconv`, CMake exports include paths for both:
+
+- `include/`
+- `<build-dir>/generated/units/`
+
+Minimal consumer example:
+
+```cmake
+add_executable(my_app main.cpp)
+target_link_libraries(my_app PRIVATE uconv)
+```
+
+```cpp
+#include <uconv-list.H>
+
+int main() {
+  const auto& _units = init_units();
+  (void)_units;
+  Quantity<meter> d(10.0);
+  Quantity<foot> f = d;
+  (void)f;
+  return 0;
+}
+```
+
+### Manual compilation (if not using CMake targets)
+
+You must add both include paths explicitly:
+
+- `-I/path/to/uconv/include`
+- `-I/path/to/uconv/<build-dir>/generated/units`
+
+### Where to inspect available units
+
+- DSL source of truth: `lib/unit-defs.rb`, `lib/unit-defs/*.rb`
+- Generated API docs: `cmake-build-debug/docs/doxygen/html/index.html`
+- In Doxygen, search/open page `Units Catalog` (auto-generated from DSL)
+- Generated headers: `cmake-build-debug/generated/units/*.H`
 
 ## Build Targets
 

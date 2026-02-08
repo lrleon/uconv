@@ -81,8 +81,28 @@ jobs:
 
       - name: Doxygen (collect warnings)
         run: |
+          set -euo pipefail
           cmake --build build-full --target docs --parallel
+          test -f build-full/generated/units/units_catalog.md
+          test -f build-full/docs/doxygen/html/units_catalog.html
+
+          CATALOG=build-full/generated/units/units_catalog.md
+          grep -q '^| Quantity | Symbol | LaTeX | Units | Description | DSL source |$' "$CATALOG"
+          grep -q '^| Unit | Symbol | LaTeX | Range | Description | DSL source |$' "$CATALOG"
+
+          pq_count=$(grep -E '^- Physical quantities: [0-9]+$' "$CATALOG" | awk '{print $4}')
+          unit_count=$(grep -E '^- Units: [0-9]+$' "$CATALOG" | awk '{print $3}')
+          conv_count=$(grep -E '^- Conversions: [0-9]+$' "$CATALOG" | awk '{print $3}')
+
+          test -n "$pq_count"
+          test -n "$unit_count"
+          test -n "$conv_count"
+          test "$pq_count" -gt 0
+          test "$unit_count" -gt 0
+          test "$conv_count" -gt 0
+
           cp build-full/docs/doxygen/warnings.log doxygen_warnings.log
+          cp build-full/generated/units/units_catalog.md units_catalog.md
 
       - name: Upload full analysis reports
         uses: actions/upload-artifact@v4
@@ -92,3 +112,4 @@ jobs:
             cppcheck.xml
             cppcheck.txt
             doxygen_warnings.log
+            units_catalog.md
