@@ -50,6 +50,7 @@
 # include <string>
 # include <sstream>
 # include <limits>
+# include <cctype>
 
 # include <tpl_dynSetHash.H>
 # include <tpl_dynMapTree.H>
@@ -173,7 +174,7 @@ public:
   {
     assert(tbl != nullptr);
     const auto ptr = tbl->search_by_name(name);
-    return static_cast<const PhysicalQuantity * const>(ptr);
+    return static_cast<const PhysicalQuantity *>(ptr);
   }
 };
 
@@ -302,6 +303,9 @@ private:
   static DynSetTree<const Unit *> *unit_tbl; // for fast retrieval of
   // a full unit given its pointer
 
+  static std::string normalize_lookup_token(const std::string & token);
+  static std::string normalize_symbol_alias(const std::string & symbol);
+
 public:
   /// return the number of units
   static std::size_t size() { return unit_tbl->size(); }
@@ -339,7 +343,8 @@ public:
   static const Unit * search_by_name(const std::string & symbol)
   {
     assert(tbl != nullptr);
-    const UnitItem *ptr = tbl->search_by_name(symbol);
+    const std::string normalized = normalize_lookup_token(symbol);
+    const UnitItem *ptr = tbl->search_by_name(normalized);
     const auto unit_ptr = static_cast<const Unit *>(ptr);
     return unit_ptr;
   }
@@ -353,9 +358,18 @@ public:
   static const Unit * search_by_symbol(const std::string & symbol)
   {
     assert(tbl != nullptr);
-    const auto ptr = tbl->search_by_symbol(symbol);
-    auto unit_ptr = static_cast<const Unit *>(ptr);
-    return unit_ptr;
+    const std::string normalized = normalize_lookup_token(symbol);
+    if (const auto ptr = tbl->search_by_symbol(normalized); ptr != nullptr)
+      return static_cast<const Unit *>(ptr);
+
+    const std::string alias = normalize_symbol_alias(normalized);
+    if (alias != normalized)
+      {
+	if (const auto ptr = tbl->search_by_symbol(alias); ptr != nullptr)
+	  return static_cast<const Unit *>(ptr);
+      }
+
+    return nullptr;
   }
 
   /// Search by unit name o symbol
@@ -1477,10 +1491,10 @@ public:
   }
 
   /// Return a new quantity with the next representable value
-  [[nodiscard]] Quantity next() const { return Quantity(this->__increase()); }
+  [[nodiscard]] Quantity next() const { return Quantity(this->__increase().raw()); }
 
   /// Return a new quantity with a previous representable value
-  [[nodiscard]] Quantity prev() const { return Quantity(this->__decrease()); }
+  [[nodiscard]] Quantity prev() const { return Quantity(this->__decrease().raw()); }
 
   /// Inter-unit assignment. Perform the conversion
   template <class SrcUnit>

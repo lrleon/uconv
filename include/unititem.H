@@ -23,9 +23,16 @@
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-/*
-  Basic bookkeeping for uconv unit library
- */
+/** @file unititem.H
+    @brief Basic bookkeeping structures for the uconv unit library.
+
+    This file defines the `UnitItem` struct and `UnitItemTable` class, which are
+    fundamental for storing metadata about physical quantities and units, such as
+    names, symbols, and descriptions.
+
+    @author Leandro Rabindranath Leon
+    @ingroup Units
+*/
 # ifndef DESC_TABLE_H
 # define DESC_TABLE_H
 
@@ -41,17 +48,21 @@
 
 /** This is a basic descriptor used for physical quantities and units.
 
+    It stores essential information like the name, symbol, LaTeX representation,
+    and a textual description.
+
    @author Leandro Rabindranath Leon
+   @ingroup Units
  */
 struct UnitItem
 {
   friend class PhysicalQuantity;
   friend class Unit;
 
-  const std::string name         = "Undefined";
-  const std::string symbol       = "Undefined";
-  const std::string description  = "Undefined";
-  const std::string latex_symbol = "Undefined";
+  const std::string name         = "Undefined"; ///< The full name of the item (e.g., "meter").
+  const std::string symbol       = "Undefined"; ///< The symbol of the item (e.g., "m").
+  const std::string description  = "Undefined"; ///< A textual description.
+  const std::string latex_symbol = "Undefined"; ///< The LaTeX representation of the symbol.
 
 private:
 
@@ -59,6 +70,12 @@ private:
 
 public:
 
+  /** Constructor with name, symbol, and description.
+
+      @param[in] __name The full name.
+      @param[in] __symbol The symbol.
+      @param[in] desc The description.
+  */
   UnitItem(const std::string & __name, const std::string & __symbol,
 	   const std::string & desc) noexcept
     : name(__name), symbol(__symbol), description(desc)
@@ -66,6 +83,13 @@ public:
     // empty
   }
 
+  /** Constructor with name, symbol, LaTeX symbol, and description.
+
+      @param[in] name The full name.
+      @param[in] symbol The symbol.
+      @param[in] latex_symbol The LaTeX representation of the symbol.
+      @param[in] desc The description.
+  */
   UnitItem(const std::string & name, const std::string & symbol,
 	   const std::string & latex_symbol,
 	   const std::string & desc) noexcept
@@ -74,6 +98,10 @@ public:
     // empty
   }
 
+  /** Convert the item to a string representation.
+
+      @return A string containing the name, symbol, and description.
+  */
   std::string to_string() const
   {
     std::ostringstream s;
@@ -83,6 +111,12 @@ public:
     return s.str();
   }
 
+  /** Convert the item to a formatted string representation.
+
+      @param[in] width The width for text alignment.
+      @param[in] left_margin The number of spaces for the left margin.
+      @return A formatted string.
+  */
   std::string to_string(std::size_t width, std::size_t left_margin = 0) const
   {
     const std::string margin(left_margin, ' ');
@@ -94,6 +128,10 @@ public:
     return s.str();
   }
 
+  /** Stream insertion operator.
+
+      Allows printing the UnitItem to an output stream.
+  */
   friend std::ostream & operator << (std::ostream & out, const UnitItem & ui)
   {
     return out << ui.to_string();
@@ -102,7 +140,11 @@ public:
 
 /** Basic table storing physical quantities and unit descriptors.
 
+    This class maintains two indices for `UnitItem` objects: one by name and one by symbol.
+    It ensures uniqueness of names and symbols within the table.
+
     @author Leandro Rabindranath Leon
+    @ingroup Units
  */
 class UnitItemTable
 {
@@ -120,6 +162,7 @@ public:
   /// Return all the stored descriptor names.
   DynList<std::string> names() const { return name_tbl.keys(); }
 
+  /// Return all the stored descriptor symbols.
   DynList<std::string> symbols() const { return symbol_tbl.keys(); }
 
   /// Return an iterator to a list of std::pair<std::string, const UnitItem*>

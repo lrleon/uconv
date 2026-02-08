@@ -17,14 +17,15 @@ A C++20 units and physical-quantities conversion library with:
 5. [Consuming the Library](#consuming-the-library)
 6. [Build Targets](#build-targets)
 7. [Running Tests](#running-tests)
-8. [Running Utilities](#running-utilities)
-9. [Examples](#examples)
-10. [Defining New Units and Conversions](#defining-new-units-and-conversions)
-11. [DSL Validation Rules](#dsl-validation-rules)
-12. [Documentation (Doxygen)](#documentation-doxygen)
-13. [CI Workflows](#ci-workflows)
-14. [Troubleshooting](#troubleshooting)
-15. [License](#license)
+8. [Running Fuzz (Bounded)](#running-fuzz-bounded)
+9. [Running Utilities](#running-utilities)
+10. [Examples](#examples)
+11. [Defining New Units and Conversions](#defining-new-units-and-conversions)
+12. [DSL Validation Rules](#dsl-validation-rules)
+13. [Documentation (Doxygen)](#documentation-doxygen)
+14. [CI Workflows](#ci-workflows)
+15. [Troubleshooting](#troubleshooting)
+16. [License](#license)
 
 ## Project Status
 
@@ -176,6 +177,22 @@ If ASAN leak detection interferes in your environment, use:
 
 ```bash
 ASAN_OPTIONS=detect_leaks=0 ctest --test-dir cmake-build-debug --output-on-failure
+```
+
+## Running Fuzz (Bounded)
+
+The fuzz target is `simple` in `fuzz/`.
+
+Important: libFuzzer runs indefinitely by default. Use bounded flags:
+
+```bash
+./cmake-build-debug/fuzz/simple -runs=20000 -max_total_time=20
+```
+
+In Clang builds, `ctest` also registers a bounded smoke test:
+
+```bash
+ctest --test-dir cmake-build-debug -R fuzz_simple_smoke --output-on-failure
 ```
 
 ## Running Utilities

@@ -1,4 +1,17 @@
 cmake_minimum_required(VERSION 3.10)
+
+# Optional Clang helper for environments where Clang does not auto-detect
+# a usable libstdc++ toolchain during compiler checks (try-compile).
+set(UCONV_CLANG_GCC_INSTALL_DIR "${UCONV_CLANG_GCC_INSTALL_DIR}" CACHE STRING
+    "Path passed to Clang via --gcc-install-dir (e.g. /usr/lib/gcc/x86_64-linux-gnu/13)")
+if(UCONV_CLANG_GCC_INSTALL_DIR)
+    set(_UCONV_CLANG_GCC_FLAG "--gcc-install-dir=${UCONV_CLANG_GCC_INSTALL_DIR}")
+    set(CMAKE_C_FLAGS_INIT "${CMAKE_C_FLAGS_INIT} ${_UCONV_CLANG_GCC_FLAG}")
+    set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} ${_UCONV_CLANG_GCC_FLAG}")
+    set(CMAKE_EXE_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS_INIT} ${_UCONV_CLANG_GCC_FLAG}")
+    set(CMAKE_SHARED_LINKER_FLAGS_INIT "${CMAKE_SHARED_LINKER_FLAGS_INIT} ${_UCONV_CLANG_GCC_FLAG}")
+endif()
+
 project(uconv CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -31,6 +44,10 @@ include_directories(${JSON_PATH}/include)
 
 # Compilation options
 add_compile_options(-Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings -Wno-parentheses)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND UCONV_CLANG_GCC_INSTALL_DIR)
+    message(STATUS "Using Clang gcc-install-dir: ${UCONV_CLANG_GCC_INSTALL_DIR}")
+endif()
 
 # Generated artifacts live in the build tree.
 set(UCONV_GENERATED_DIR ${CMAKE_BINARY_DIR}/generated)

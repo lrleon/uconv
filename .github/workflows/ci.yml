@@ -62,6 +62,30 @@ jobs:
             echo "CXX=g++" >> "$GITHUB_ENV"
           fi
 
+      - name: Detect gcc-install-dir for Clang
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            GCC_INSTALL_DIR="$(
+              ls -d /usr/lib/gcc/*/* 2>/dev/null | while read -r d; do
+                ver="$(basename "$d")"
+                if [ -d "/usr/include/c++/$ver" ]; then
+                  echo "$d"
+                fi
+              done | sort -V | tail -n 1
+            )"
+
+            if [ -z "$GCC_INSTALL_DIR" ]; then
+              echo "Unable to detect a usable gcc-install-dir for clang"
+              exit 1
+            fi
+
+            echo "CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
+            echo "CLANG_GCC_CMAKE_ARG=-DUCONV_CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
+            echo "Using clang gcc-install-dir: $GCC_INSTALL_DIR"
+          else
+            echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
+          fi
+
       - name: Checkout Aleph-w dependency
         run: |
           git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
@@ -103,7 +127,8 @@ jobs:
             -DALEPHW="${ALEPHW_DIR}" \
             -DJSON_PATH=/usr \
             -DENABLE_SANITIZERS=OFF \
-            -DBUILD_DOCS=OFF
+            -DBUILD_DOCS=OFF \
+            ${CLANG_GCC_CMAKE_ARG}
 
       - name: Build
         run: |
@@ -171,6 +196,30 @@ jobs:
             echo "CXX=g++" >> "$GITHUB_ENV"
           fi
 
+      - name: Detect gcc-install-dir for Clang
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            GCC_INSTALL_DIR="$(
+              ls -d /usr/lib/gcc/*/* 2>/dev/null | while read -r d; do
+                ver="$(basename "$d")"
+                if [ -d "/usr/include/c++/$ver" ]; then
+                  echo "$d"
+                fi
+              done | sort -V | tail -n 1
+            )"
+
+            if [ -z "$GCC_INSTALL_DIR" ]; then
+              echo "Unable to detect a usable gcc-install-dir for clang"
+              exit 1
+            fi
+
+            echo "CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
+            echo "CLANG_GCC_CMAKE_ARG=-DUCONV_CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
+            echo "Using clang gcc-install-dir: $GCC_INSTALL_DIR"
+          else
+            echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
+          fi
+
       - name: Checkout Aleph-w dependency
         run: |
           git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
@@ -211,7 +260,8 @@ jobs:
             -DALEPHW="${ALEPHW_DIR}" \
             -DJSON_PATH=/usr \
             -DENABLE_SANITIZERS=ON \
-            -DBUILD_DOCS=OFF
+            -DBUILD_DOCS=OFF \
+            ${CLANG_GCC_CMAKE_ARG}
 
       - name: Build
         run: |
@@ -232,6 +282,120 @@ jobs:
           path: |
             build-asan/Testing/Temporary/LastTest.log
             build-asan/CMakeCache.txt
+
+  coverage-gate:
+    name: coverage-gate (ubuntu-24.04, gcc, Debug)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build pkg-config ccache git ruby-full \
+            gcovr \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
+            libtclap-dev \
+            nlohmann-json3-dev \
+            libgtest-dev \
+            g++
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-coverage-gate-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-coverage-gate-ccache-
+            ${{ runner.os }}-ccache-
+
+      - name: Configure
+        run: |
+          rm -rf build-cov
+          cmake -S . -B build-cov -G Ninja \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="--coverage -O0 -g -DNDEBUG" \
+            -DCMAKE_CXX_FLAGS="--coverage -O0 -g -DNDEBUG" \
+            -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+            -DCMAKE_SHARED_LINKER_FLAGS="--coverage" \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=OFF \
+            -DUCONV_ENABLE_FUZZ_SMOKE_TESTS=OFF
+
+      - name: Build
+        run: |
+          cmake --build build-cov --parallel
+
+      - name: Test
+        run: |
+          ctest --test-dir build-cov --output-on-failure --parallel 2 --timeout 600
+
+      - name: Run examples for coverage
+        run: |
+          ./build-cov/Examples/basic_conversion
+          ./build-cov/Examples/physics
+          ./build-cov/Examples/dynamic_units
+
+      - name: Coverage gate (uconv core)
+        run: |
+          gcovr -r . build-cov \
+            --filter 'include/uconv[.]H$' \
+            --filter 'lib/uconv[.]cc$' \
+            --exclude-throw-branches \
+            --exclude-unreachable-branches \
+            --txt build-cov/coverage-summary.txt \
+            --txt-summary \
+            --txt-metric branch \
+            --print-summary \
+            --fail-under-line 80 \
+            --fail-under-branch 75
+
+          gcovr -r . build-cov \
+            --filter 'include/uconv[.]H$' \
+            --filter 'lib/uconv[.]cc$' \
+            --exclude-throw-branches \
+            --exclude-unreachable-branches \
+            --xml-pretty \
+            --output build-cov/coverage.xml
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-gate-artifacts
+          path: |
+            build-cov/coverage-summary.txt
+            build-cov/coverage.xml
 
   docs-check:
     name: docs-check (Doxygen warnings gate)
@@ -330,6 +494,7 @@ jobs:
     needs:
       - build-and-test
       - sanitizers
+      - coverage-gate
       - docs-check
     if: always()
     steps:
@@ -338,6 +503,7 @@ jobs:
           set -euo pipefail
           echo "build-and-test result: ${{ needs.build-and-test.result }}"
           echo "sanitizers result: ${{ needs.sanitizers.result }}"
+          echo "coverage-gate result: ${{ needs.coverage-gate.result }}"
           echo "docs-check result: ${{ needs.docs-check.result }}"
 
           is_ok() {
@@ -357,6 +523,7 @@ jobs:
 
           check_job "build-and-test" "${{ needs.build-and-test.result }}"
           check_job "sanitizers" "${{ needs.sanitizers.result }}"
+          check_job "coverage-gate" "${{ needs.coverage-gate.result }}"
           check_job "docs-check" "${{ needs.docs-check.result }}"
 
           if [ "$all_ok" -ne 1 ]; then
