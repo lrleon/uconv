@@ -3,36 +3,36 @@
 #include <units/length.H>
 #include <units/temperature.H>
 
-// Instanciar el sistema de unidades (necesario una vez en el programa)
+// Instantiate the units system (required once in the program)
 UnitsInstancer init;
 
 using namespace std;
 
 int main() {
-    cout << "=== Ejemplo 1: Conversión Básica ===" << endl;
+    cout << "=== Example 1: Basic Conversion ===" << endl;
 
-    // Definición de cantidades con tipos fuertes
-    Quantity<meter> largo = 10.0;
-    Quantity<foot> ancho = 50.0;
+    // Definition of quantities with strong types
+    Quantity<meter> length = 10.0;
+    Quantity<foot> width = 50.0;
 
-    cout << "Largo inicial: " << largo << endl;
-    cout << "Ancho inicial: " << ancho << endl;
+    cout << "Initial length: " << length << endl;
+    cout << "Initial width: " << width << endl;
 
-    // Operaciones aritméticas: conversión automática
-    // 'ancho' se convierte a 'meter' antes de sumar
-    Quantity<meter> total = largo + ancho;
+    // Arithmetic operations: automatic conversion
+    // 'width' is converted to 'meter' before adding
+    Quantity<meter> total = length + width;
 
-    cout << "Total (largo + ancho) en metros: " << total << endl;
+    cout << "Total (length + width) in meters: " << total << endl;
 
-    // Conversión explícita a otra unidad
-    Quantity<yard> total_yardas = total;
-    cout << "Total en yardas: " << total_yardas << endl;
+    // Explicit conversion to another unit
+    Quantity<yard> total_yards = total;
+    cout << "Total in yards: " << total_yards << endl;
 
-    // Ejemplo con temperatura
+    // Example with temperature
     Quantity<Celsius> t_c = 100.0;
     Quantity<Fahrenheit> t_f = t_c;
 
-    cout << "\nTemperatura de ebullición: " << t_c << " = " << t_f << endl;
+    cout << "\nBoiling point temperature: " << t_c << " = " << t_f << endl;
 
     return 0;
 }

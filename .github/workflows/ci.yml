@@ -1,0 +1,298 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: build-and-test (${{ matrix.os }}, ${{ matrix.compiler }}, ${{ matrix.build_type }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install base system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build pkg-config ccache git ruby-full \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Install GCC toolchain
+        if: matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get install -y g++
+
+      - name: Install Clang toolchain
+        if: matrix.compiler == 'clang'
+        run: |
+          sudo apt-get install -y clang g++
+
+      - name: Configure compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang" >> "$GITHUB_ENV"
+            echo "CXX=clang++" >> "$GITHUB_ENV"
+          else
+            echo "CC=gcc" >> "$GITHUB_ENV"
+            echo "CXX=g++" >> "$GITHUB_ENV"
+          fi
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-
+            ${{ runner.os }}-${{ matrix.os }}-${{ matrix.compiler }}-ccache-
+            ${{ runner.os }}-${{ matrix.os }}-ccache-
+
+      - name: Configure
+        run: |
+          rm -rf build
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=OFF
+
+      - name: Build
+        run: |
+          cmake --build build --parallel
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+        run: |
+          ctest --test-dir build --output-on-failure --parallel 2 --timeout 600
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-logs-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/CMakeCache.txt
+
+  sanitizers:
+    name: sanitizers (ubuntu-24.04, ${{ matrix.compiler }}, Debug)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build pkg-config ccache git ruby-full \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Install GCC toolchain
+        if: matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get install -y g++
+
+      - name: Install Clang toolchain
+        if: matrix.compiler == 'clang'
+        run: |
+          sudo apt-get install -y clang g++
+
+      - name: Configure compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang" >> "$GITHUB_ENV"
+            echo "CXX=clang++" >> "$GITHUB_ENV"
+          else
+            echo "CC=gcc" >> "$GITHUB_ENV"
+            echo "CXX=g++" >> "$GITHUB_ENV"
+          fi
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-sanitizers-${{ matrix.compiler }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-sanitizers-${{ matrix.compiler }}-ccache-
+            ${{ runner.os }}-sanitizers-ccache-
+
+      - name: Configure
+        run: |
+          rm -rf build-asan
+          cmake -S . -B build-asan -G Ninja \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=ON \
+            -DBUILD_DOCS=OFF
+
+      - name: Build
+        run: |
+          cmake --build build-asan --parallel
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          ctest --test-dir build-asan --output-on-failure --parallel 2 --timeout 600
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-logs-sanitizers-${{ matrix.compiler }}
+          path: |
+            build-asan/Testing/Temporary/LastTest.log
+            build-asan/CMakeCache.txt
+
+  docs-check:
+    name: docs-check (Doxygen warnings gate)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build git ruby-full \
+            doxygen graphviz g++ \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Configure
+        run: |
+          rm -rf build-docs
+          cmake -S . -B build-docs -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=ON
+
+      - name: Build docs
+        run: |
+          cmake --build build-docs --target docs --parallel
+          test -f build-docs/docs/doxygen/html/index.html
+
+      - name: Gate on Doxygen warnings
+        run: |
+          WARN_FILE=build-docs/docs/doxygen/warnings.log
+          if [ -s "$WARN_FILE" ]; then
+            echo "Doxygen warnings were found:"
+            cat "$WARN_FILE"
+            exit 1
+          fi
+          echo "No Doxygen warnings."
+
+      - name: Upload docs warnings on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doxygen-warnings
+          path: build-docs/docs/doxygen/warnings.log
+
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-24.04
+    needs:
+      - build-and-test
+      - sanitizers
+      - docs-check
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          set -euo pipefail
+          echo "build-and-test result: ${{ needs.build-and-test.result }}"
+          echo "sanitizers result: ${{ needs.sanitizers.result }}"
+          echo "docs-check result: ${{ needs.docs-check.result }}"
+
+          is_ok() {
+            [ "$1" = "success" ] || [ "$1" = "skipped" ]
+          }
+
+          all_ok=1
+
+          check_job() {
+            job_name="$1"
+            job_result="$2"
+            if ! is_ok "$job_result"; then
+              echo "Job '$job_name' did not succeed (result: $job_result)"
+              all_ok=0
+            fi
+          }
+
+          check_job "build-and-test" "${{ needs.build-and-test.result }}"
+          check_job "sanitizers" "${{ needs.sanitizers.result }}"
+          check_job "docs-check" "${{ needs.docs-check.result }}"
+
+          if [ "$all_ok" -ne 1 ]; then
+            echo "CI failed"
+            exit 1
+          fi
+          echo "CI passed"

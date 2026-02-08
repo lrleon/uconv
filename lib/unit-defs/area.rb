@@ -20,5 +20,5 @@ unit :Inch2 do
   range 0..12*1e7
 end
 
-conversion :Feet2, :Inch2 do |a| "#{a}/12" end
-conversion :Inch2, :Feet2 do |a| "12*#{a}" end
+conversion :Feet2, :Inch2 do |a| "144*#{a}" end
+conversion :Inch2, :Feet2 do |a| "#{a}/144" end

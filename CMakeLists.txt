@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.10)
 project(uconv CXX)
 
 set(CMAKE_CXX_STANDARD 20)
+file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" UCONV_VERSION LIMIT_COUNT 1)
+if(NOT UCONV_VERSION)
+    set(UCONV_VERSION "dev")
+endif()
 
 # Dependencies
 if(NOT DEFINED ALEPHW)
@@ -35,11 +39,42 @@ if(ENABLE_SANITIZERS)
     add_link_options(-fsanitize=address,undefined)
 endif()
 
+option(BUILD_DOCS "Build API documentation with Doxygen" ON)
+
 enable_testing()
 
 # Subdirectories
 add_subdirectory(lib)
-add_subdirectory(tests)
+add_subdirectory(utils)
 add_subdirectory(Tests)
 add_subdirectory(fuzz)
 add_subdirectory(Examples)
+
+if(BUILD_DOCS)
+    find_package(Doxygen QUIET)
+    if(DOXYGEN_FOUND)
+        set(DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/doxygen)
+        set(DOXYGEN_CONFIG_FILE ${CMAKE_BINARY_DIR}/Doxyfile)
+        set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html)
+
+        configure_file(
+            ${CMAKE_SOURCE_DIR}/cmake/Doxyfile.in
+            ${DOXYGEN_CONFIG_FILE}
+            @ONLY
+        )
+
+        add_custom_command(
+            OUTPUT ${DOXYGEN_INDEX_FILE}
+            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG_FILE}
+            DEPENDS uconv ${DOXYGEN_CONFIG_FILE}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Generating API documentation with Doxygen"
+            VERBATIM
+        )
+
+        add_custom_target(docs DEPENDS ${DOXYGEN_INDEX_FILE})
+        message(STATUS "Doxygen docs target enabled: 'docs'")
+    else()
+        message(WARNING "Doxygen not found. 'docs' target will not be available.")
+    endif()
+endif()

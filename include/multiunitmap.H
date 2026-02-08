@@ -36,39 +36,76 @@ using namespace std;
 
 class Unit;
 
+enum class CompoundUnitOp
+{
+  Product = 0,
+  Ratio = 1
+};
+
 class CompoundUnitTbl
 {
+  struct Key
+  {
+    CompoundUnitOp op = CompoundUnitOp::Product;
+    DynList<string> names;
+  };
+
   struct Cmp
   {
-    bool operator () (const DynList<string> & l1,
-		      const DynList<string> & l2) const noexcept
+    bool operator () (const Key & k1, const Key & k2) const noexcept
     {
-      return lesser(sort(l1), sort(l2));
+      if (k1.op != k2.op)
+	return static_cast<int>(k1.op) < static_cast<int>(k2.op);
+
+      if (k1.op == CompoundUnitOp::Product)
+	return lesser(sort(k1.names), sort(k2.names));
+
+      return lesser(k1.names, k2.names);
     }
   };
 
-  DynMapTree<DynList<string>, const Unit *, Avl_Tree, Cmp> tbl;
+  DynMapTree<Key, const Unit *, Avl_Tree, Cmp> tbl;
 
-public:
-
-  const Unit * search(const DynList<string> & names)
+  const Unit * search(const Key & key)
   {
-    auto p = tbl.search(names);
+    auto p = tbl.search(key);
     return p == nullptr ? nullptr : p->second;
   }
 
-  bool insert(const DynList<string> & l, const Unit & unit)
+  bool insert(const Key & key, const Unit & unit)
   {
-    return tbl.insert(l, &unit) != nullptr;
+    return tbl.insert(key, &unit) != nullptr;
+  }
+
+public:
+
+  const Unit * search_product(const DynList<string> & names)
+  {
+    return search({CompoundUnitOp::Product, names});
+  }
+
+  const Unit * search_ratio(const DynList<string> & names)
+  {
+    return search({CompoundUnitOp::Ratio, names});
+  }
+
+  bool insert_product(const DynList<string> & names, const Unit & unit)
+  {
+    return insert({CompoundUnitOp::Product, names}, unit);
+  }
+
+  bool insert_ratio(const DynList<string> & names, const Unit & unit)
+  {
+    return insert({CompoundUnitOp::Ratio, names}, unit);
   }
 
   DynList<pair<DynList<string>, string>> items()
   {
     using T = pair<DynList<string>, string>;
 
-    return tbl.items_ptr().maps<T>([] (pair<DynList<string>, const Unit*> * p)
+    return tbl.items_ptr().maps<T>([] (pair<Key, const Unit*> * p)
       {
-	return make_pair(p->first, p->second->name);
+	return make_pair(p->first.names, p->second->name);
       });
   }
 };

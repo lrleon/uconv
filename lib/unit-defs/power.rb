@@ -1,5 +1,5 @@
 physical_quantity :Power do
-  symbol "P"
+  symbol "Pow"
   latex "P"
   description "power is the rate of doing work. It is the amount of energy consumed per unit time"
 end

@@ -3,6 +3,7 @@
 
 require 'erb'
 require 'fileutils'
+require 'set'
 
 # --- Data Structures ---
 
@@ -19,12 +20,14 @@ class PhysicalQuantity < Element
 end
 
 class Unit < Element
-  attr_accessor :name, :symbol, :latex, :description, :quantity, :min, :max
+  attr_accessor :name, :symbol, :latex, :description, :quantity, :min, :max,
+                :range_defined
 
   def initialize(name)
     @name = name
     @min = 0.0
     @max = 0.0
+    @range_defined = false
   end
 end
 
@@ -57,16 +60,22 @@ class DSL
 
     prev_file = @current_file
     @current_file = File.basename(file, ".rb")
+    content = nil
+    loaded_path = full_path
 
     begin
       content = File.read(full_path)
     rescue Errno::ENOENT
       # Fallback: try relative to current working directory or just as is
+      loaded_path = file
       content = File.read(file)
+    ensure
+      begin
+        instance_eval(content, loaded_path) unless content.nil?
+      ensure
+        @current_file = prev_file
+      end
     end
-
-    instance_eval(content, full_path)
-    @current_file = prev_file
   end
 
   def physical_quantity(name, &block)
@@ -106,11 +115,151 @@ class DSL
     def range(val)
       @target.min = val.begin
       @target.max = val.end
+      @target.range_defined = true
     end
   end
 end
 
+class DSLValidationError < StandardError
+end
+
+def blank?(value)
+  value.nil? || value.to_s.strip.empty?
+end
+
+def element_ref(element)
+  where = element.source_file || "unknown"
+  "#{where}:#{element.class.name}(#{element.respond_to?(:name) ? element.name : "#{element.from}->#{element.to}"})"
+end
+
+def add_duplicates(errors, elements, label)
+  duplicates = elements.group_by { |item| yield(item) }
+                       .select { |k, group| !blank?(k) && group.size > 1 }
+  duplicates.each do |value, group|
+    refs = group.map { |item| element_ref(item) }.join(", ")
+    errors << "Duplicated #{label} `#{value}` in #{refs}"
+  end
+end
+
+def validate_presence!(dsl, errors)
+  dsl.quantities.each do |pq|
+    errors << "Missing symbol for #{element_ref(pq)}" if blank?(pq.symbol)
+    errors << "Missing latex for #{element_ref(pq)}" if blank?(pq.latex)
+    errors << "Missing description for #{element_ref(pq)}" if blank?(pq.description)
+  end
+
+  dsl.units.each do |unit|
+    errors << "Missing symbol for #{element_ref(unit)}" if blank?(unit.symbol)
+    errors << "Missing latex for #{element_ref(unit)}" if blank?(unit.latex)
+    errors << "Missing description for #{element_ref(unit)}" if blank?(unit.description)
+    errors << "Missing quantity reference for #{element_ref(unit)}" if blank?(unit.quantity)
+    errors << "Missing range for #{element_ref(unit)}" unless unit.range_defined
+
+    unless unit.min.is_a?(Numeric) && unit.max.is_a?(Numeric)
+      errors << "Range values must be numeric for #{element_ref(unit)}"
+      next
+    end
+
+    errors << "Invalid range (min > max) for #{element_ref(unit)}" if unit.min > unit.max
+  end
+
+  dsl.conversions.each do |conv|
+    errors << "Missing source unit in #{element_ref(conv)}" if blank?(conv.from)
+    errors << "Missing target unit in #{element_ref(conv)}" if blank?(conv.to)
+    errors << "Missing conversion formula block in #{element_ref(conv)}" if conv.formula.nil?
+    errors << "Explicit self-conversion is not allowed in #{element_ref(conv)}" if conv.from == conv.to
+  end
+end
+
+def validate_duplicates!(dsl, errors)
+  add_duplicates(errors, dsl.quantities, "physical quantity name") { |pq| pq.name }
+  add_duplicates(errors, dsl.quantities, "physical quantity symbol") { |pq| pq.symbol }
+  add_duplicates(errors, dsl.units, "unit name") { |unit| unit.name }
+  add_duplicates(errors, dsl.units, "unit symbol") { |unit| unit.symbol }
+  add_duplicates(errors, dsl.conversions, "conversion pair") { |conv| "#{conv.from}->#{conv.to}" }
+
+  pq_names = dsl.quantities.map(&:name).to_set
+  unit_names = dsl.units.map(&:name).to_set
+  overlaps = pq_names & unit_names
+  overlaps.each do |name|
+    errors << "Type name collision: `#{name}` is both a physical quantity and a unit"
+  end
+end
+
+def validate_references!(dsl, errors)
+  quantities_by_name = dsl.quantities.each_with_object({}) { |pq, h| h[pq.name] = pq }
+  units_by_name = dsl.units.each_with_object({}) { |unit, h| h[unit.name] = unit }
+
+  dsl.units.each do |unit|
+    next if blank?(unit.quantity)
+    next if quantities_by_name.key?(unit.quantity)
+
+    errors << "Unknown physical quantity `#{unit.quantity}` in #{element_ref(unit)}"
+  end
+
+  dsl.conversions.each do |conv|
+    from_unit = units_by_name[conv.from]
+    to_unit = units_by_name[conv.to]
+
+    errors << "Unknown source unit `#{conv.from}` in #{element_ref(conv)}" if from_unit.nil?
+    errors << "Unknown target unit `#{conv.to}` in #{element_ref(conv)}" if to_unit.nil?
+    next if from_unit.nil? || to_unit.nil?
+
+    if from_unit.quantity != to_unit.quantity
+      errors << "Cross-quantity conversion `#{conv.from}->#{conv.to}` "\
+                "is invalid (#{from_unit.quantity} != #{to_unit.quantity})"
+    end
+  end
+end
+
+def validate_conversion_coverage!(dsl, errors)
+  conversion_pairs = dsl.conversions.map { |conv| [conv.from, conv.to] }.to_set
+  known_quantities = dsl.quantities.map(&:name).to_set
+
+  units_by_quantity = dsl.units.group_by(&:quantity)
+  units_by_quantity.each do |quantity_name, units|
+    next unless known_quantities.include?(quantity_name)
+    next if units.size <= 1
+
+    names = units.map(&:name).sort
+    names.each do |src|
+      names.each do |tgt|
+        next if src == tgt
+        next if conversion_pairs.include?([src, tgt])
+
+        errors << "Missing conversion coverage for quantity `#{quantity_name}`: "\
+                  "`#{src} -> #{tgt}`"
+      end
+    end
+  end
+end
+
+def validate_dsl!(dsl)
+  errors = []
+  validate_presence!(dsl, errors)
+  validate_duplicates!(dsl, errors)
+  validate_references!(dsl, errors)
+  validate_conversion_coverage!(dsl, errors)
+
+  return if errors.empty?
+
+  formatted = errors.each_with_index.map { |msg, idx| "  #{idx + 1}. #{msg}" }.join("\n")
+  raise DSLValidationError, "DSL validation failed:\n#{formatted}"
+end
+
 # --- C++ Generation Template ---
+
+def cpp_string(value)
+  value.to_s.dump
+end
+
+def doxygen_text(value)
+  value.to_s.gsub(/\s+/, " ").strip.gsub("*/", "* /")
+end
+
+def doxygen_code(value)
+  "`#{doxygen_text(value)}`"
+end
 
 TEMPLATE = <<~CPP
 /*
@@ -118,56 +267,107 @@ TEMPLATE = <<~CPP
    Generated by bin/gen-units from <%= source_file %>.rb
 */
 
+/**
+ * @file <%= source_file %>.H
+ * @brief Auto-generated units and conversions declared in <%= doxygen_code(source_file + ".rb") %>.
+ * @ingroup Units
+ *
+ * This file is generated by <%= doxygen_code("bin/gen-units") %>. Manual edits are overwritten.
+ */
+
 #ifndef <%= guard_name %>
 #define <%= guard_name %>
 
 #include "uconv.H"
 
-// --- Physical Quantities ---
+/** @name Physical Quantities
+ *  Types generated from the DSL physical quantity declarations.
+ */
+/// @{
 
 <% quantities.each do |pq| %>
+/**
+ * @brief Physical quantity <%= doxygen_code(pq.name) %>.
+ * @details Symbol: <%= doxygen_code(pq.symbol) %>.
+ * LaTeX symbol: <%= doxygen_code(pq.latex) %>.
+ * Description: <%= doxygen_text(pq.description) %>.
+ * DSL source: <%= doxygen_code(pq.source_file + ".rb") %>.
+ * @ingroup Units
+ */
 struct <%= pq.name %> : public PhysicalQuantity {
     static const <%= pq.name %>& get_instance() {
         static <%= pq.name %> instance;
         return instance;
     }
 private:
-    <%= pq.name %>() : PhysicalQuantity("<%= pq.name %>", "<%= pq.symbol %>", "<%= pq.latex %>", R"DESC(<%= pq.description %>)DESC") {}
+    <%= pq.name %>() : PhysicalQuantity(<%= cpp_string(pq.name) %>, <%= cpp_string(pq.symbol) %>, <%= cpp_string(pq.latex) %>, <%= cpp_string(pq.description) %>) {}
 public:
     <%= pq.name %>(const <%= pq.name %>&) = delete;
     void operator=(const <%= pq.name %>&) = delete;
 };
 <% end %>
+/// @}
 
-// --- Units ---
+/** @name Units
+ *  Unit types generated from the DSL unit declarations.
+ */
+/// @{
 
 <% units.each do |u| %>
+/**
+ * @brief Unit type <%= doxygen_code(u.name) %>.
+ * @details Quantity: <%= doxygen_code(u.quantity) %>.
+ * Symbol: <%= doxygen_code(u.symbol) %>.
+ * LaTeX symbol: <%= doxygen_code(u.latex) %>.
+ * Valid range: [<%= doxygen_text(u.min) %>, <%= doxygen_text(u.max) %>].
+ * Description: <%= doxygen_text(u.description) %>.
+ * DSL source: <%= doxygen_code(u.source_file + ".rb") %>.
+ * @ingroup Units
+ */
 struct <%= u.name %> : public Unit {
     static const <%= u.name %>& get_instance() {
         static <%= u.name %> instance;
         return instance;
     }
 private:
-    <%= u.name %>() : Unit("<%= u.name %>", "<%= u.symbol %>", "<%= u.latex %>", R"DESC(<%= u.description %>)DESC", <%= u.quantity %>::get_instance(), <%= u.min %>, <%= u.max %>) {}
+    <%= u.name %>() : Unit(<%= cpp_string(u.name) %>, <%= cpp_string(u.symbol) %>, <%= cpp_string(u.latex) %>, <%= cpp_string(u.description) %>, <%= u.quantity %>::get_instance(), <%= u.min %>, <%= u.max %>) {}
 public:
     <%= u.name %>(const <%= u.name %>&) = delete;
     void operator=(const <%= u.name %>&) = delete;
 };
-// Register converter for self
+/**
+ * @brief Identity conversion specialization for <%= doxygen_code(u.name) %>.
+ * @param val Value in <%= doxygen_code(u.name) %>.
+ * @return The same value, unchanged.
+ * @ingroup Units
+ */
 template <> inline double unit_convert<<%= u.name %>, <%= u.name %>>(double val) { return val; }
+/** @brief Registers the identity conversion for <%= doxygen_code(u.name) %>. */
 static UnitConverter<<%= u.name %>, <%= u.name %>> __uc__<%= u.name %>__to__<%= u.name %>;
 <% end %>
+/// @}
 
-// --- Conversions ---
+/** @name Conversions
+ *  Conversion specializations generated from the DSL conversion declarations.
+ */
+/// @{
 
 <% conversions.each do |c| %>
-// From <%= c.from %> to <%= c.to %>
+<% formula = c.formula.call('V') %>
+/**
+ * @brief Conversion from <%= doxygen_code(c.from) %> to <%= doxygen_code(c.to) %>.
+ * @param V Value expressed in <%= doxygen_code(c.from) %>.
+ * @return Equivalent value expressed in <%= doxygen_code(c.to) %>.
+ * @note Formula generated from DSL: <%= doxygen_code(formula) %>.
+ * @ingroup Units
+ */
 template <> inline double unit_convert<<%= c.from %>, <%= c.to %>>(double V) {
-    return <%= c.formula.call('V') %>;
+    return <%= formula %>;
 }
-// Register converter
+/** @brief Registers conversion <%= doxygen_code(c.from + " -> " + c.to) %>. */
 static UnitConverter<<%= c.from %>, <%= c.to %>> __uc__<%= c.from %>__to__<%= c.to %>;
 <% end %>
+/// @}
 
 #endif // <%= guard_name %>
 CPP
@@ -183,7 +383,7 @@ dsl_file = ARGV[0]
 output_dir = ARGV[1]
 
 # Determine project root based on dsl_file location
-# dsl_file is expected to be in lib/units.rb, so root is two levels up
+# dsl_file is expected to be in lib/unit-defs.rb, so root is two levels up
 project_root = File.expand_path("../..", dsl_file)
 
 FileUtils.mkdir_p(output_dir)
@@ -191,9 +391,15 @@ FileUtils.mkdir_p(output_dir)
 dsl = DSL.new(project_root)
 
 begin
-  dsl.instance_eval(File.read(dsl_file), dsl_file)
+  dsl.import(dsl_file)
 rescue StandardError => e
   abort "Error parsing DSL: #{e.message}\n#{e.backtrace.join("\n")}"
+end
+
+begin
+  validate_dsl!(dsl)
+rescue DSLValidationError => e
+  abort e.message
 end
 
 # Group by source file
@@ -224,6 +430,13 @@ all_units_content = <<~CPP
    AUTOMATICALLY GENERATED FILE - DO NOT EDIT
    Includes all generated unit headers.
 */
+/**
+ * @file all_units.H
+ * @brief Aggregates every generated units header.
+ * @ingroup Units
+ *
+ * This file is generated by `bin/gen-units`.
+ */
 #ifndef ALL_UNITS_H
 #define ALL_UNITS_H
 

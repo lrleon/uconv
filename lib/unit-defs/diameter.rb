@@ -13,7 +13,7 @@ unit :Foot_D do
 end
 
 unit :Inch_D do
-  symbol "in"
+  symbol "in_d"
   latex "in"
   description "The diameter measured in inches"
   quantity :Diameter
@@ -21,7 +21,7 @@ unit :Inch_D do
 end
 
 unit :Meter_D do
-  symbol "m"
+  symbol "m_d"
   latex "m"
   description "The diameter measured in meters"
   quantity :Diameter

@@ -1,0 +1,94 @@
+name: Full Analysis
+
+on:
+  schedule:
+    # Weekly on Sunday at 02:00 UTC.
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-analysis:
+    name: full-analysis (ubuntu-24.04, gcc, Release)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build pkg-config ccache git \
+            g++ ruby-full doxygen graphviz cppcheck \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Configure
+        run: |
+          rm -rf build-full
+          cmake -S . -B build-full -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=ON
+
+      - name: Build
+        run: |
+          cmake --build build-full --parallel
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+        run: |
+          ctest --test-dir build-full --output-on-failure --parallel 2 --timeout 600
+
+      - name: cppcheck (full repo)
+        run: |
+          rm -f cppcheck.xml cppcheck.txt
+          cppcheck \
+            --enable=warning,performance,portability \
+            --inconclusive \
+            --inline-suppr \
+            --suppress=missingIncludeSystem \
+            --error-exitcode=1 \
+            --xml --xml-version=2 \
+            -I include \
+            -I "${ALEPHW_DIR}" \
+            . 2> cppcheck.xml
+          cppcheck \
+            --enable=warning,performance,portability \
+            --inconclusive \
+            --inline-suppr \
+            --suppress=missingIncludeSystem \
+            -I include \
+            -I "${ALEPHW_DIR}" \
+            . 2> cppcheck.txt || true
+
+      - name: Doxygen (collect warnings)
+        run: |
+          cmake --build build-full --target docs --parallel
+          cp build-full/docs/doxygen/warnings.log doxygen_warnings.log
+
+      - name: Upload full analysis reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-analysis-reports
+          path: |
+            cppcheck.xml
+            cppcheck.txt
+            doxygen_warnings.log

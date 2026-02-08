@@ -1,0 +1,80 @@
+name: Docs (Doxygen)
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: build-and-deploy (GitHub Pages)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build git ruby-full \
+            doxygen graphviz g++ \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Configure
+        run: |
+          rm -rf build
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=ON
+
+      - name: Build Doxygen HTML
+        run: |
+          cmake --build build --target docs --parallel
+          test -f build/docs/doxygen/html/index.html
+
+      - name: Gate on Doxygen warnings
+        run: |
+          WARN_FILE=build/docs/doxygen/warnings.log
+          if [ -s "$WARN_FILE" ]; then
+            echo "Doxygen warnings were found:"
+            cat "$WARN_FILE"
+            exit 1
+          fi
+          echo "No Doxygen warnings."
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/docs/doxygen/html
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

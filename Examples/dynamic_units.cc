@@ -13,7 +13,7 @@ int main() {
 
     try {
         // Supongamos que estos strings vienen de una interfaz de usuario o archivo de config
-        string unidad_entrada = "psi";
+        string unidad_entrada = "psia";
         double valor_entrada = 30.0;
 
         string unidad_salida = "bar";

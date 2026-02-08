@@ -19,6 +19,7 @@ set(TEST_SOURCES
     quantity.cc
     unititem.cc
     line.cc
+    compound.cc
 )
 
 foreach(test_src ${TEST_SOURCES})

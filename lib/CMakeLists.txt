@@ -2,7 +2,7 @@
 # We use bin/gen-units to generate C++ headers in include/units from the Ruby DSL
 
 set(GEN_UNITS ${CMAKE_SOURCE_DIR}/bin/gen-units)
-set(UNITS_DSL ${CMAKE_SOURCE_DIR}/lib/units.rb)
+set(UNITS_DSL ${CMAKE_SOURCE_DIR}/lib/unit-defs.rb)
 set(UNITS_DSL_DIR ${CMAKE_SOURCE_DIR}/lib/unit-defs)
 set(UNITS_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/include/units)
 set(ALL_UNITS_H ${UNITS_OUTPUT_DIR}/all_units.H)

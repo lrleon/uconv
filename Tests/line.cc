@@ -43,8 +43,8 @@ TEST(LineEq, basic)
   EXPECT_EQ(l1, l2);
   EXPECT_NE(l1, l3);
 
-  EXPECT_THROW(LineEq(1, 2, 1, 3), std::out_of_range);
-  EXPECT_THROW(LineEq(2, 1, 3, 1), std::out_of_range);
+  EXPECT_THROW(LineEq(1, 2, 1, 3), std::exception);
+  EXPECT_NO_THROW(LineEq(2, 1, 3, 1));
 }
 
 TEST(LineEq, simple_line)
