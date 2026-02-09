@@ -1,0 +1,555 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: build-and-test (${{ matrix.os }}, ${{ matrix.compiler }}, ${{ matrix.build_type }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install base system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build pkg-config ccache git ruby-full \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
+            libtclap-dev \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Install GCC toolchain
+        if: matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get install -y g++
+
+      - name: Install Clang toolchain
+        if: matrix.compiler == 'clang'
+        run: |
+          sudo apt-get install -y clang g++
+
+      - name: Configure compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang" >> "$GITHUB_ENV"
+            echo "CXX=clang++" >> "$GITHUB_ENV"
+          else
+            echo "CC=gcc" >> "$GITHUB_ENV"
+            echo "CXX=g++" >> "$GITHUB_ENV"
+          fi
+
+      - name: Detect gcc-install-dir for Clang
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            GCC_INSTALL_DIR="$(
+              ls -d /usr/lib/gcc/*/* 2>/dev/null | while read -r d; do
+                ver="$(basename "$d")"
+                if [ -d "/usr/include/c++/$ver" ]; then
+                  echo "$d"
+                fi
+              done | sort -V | tail -n 1
+            )"
+
+            if [ -z "$GCC_INSTALL_DIR" ]; then
+              echo "Unable to detect a usable gcc-install-dir for clang"
+              exit 1
+            fi
+
+            if "${CXX:-clang++}" --help 2>/dev/null | grep -q -- '--gcc-install-dir'; then
+              echo "CLANG_GCC_CMAKE_ARG=-DUCONV_CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
+              echo "Using clang --gcc-install-dir: $GCC_INSTALL_DIR"
+            else
+              echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
+              echo "Clang does not expose --gcc-install-dir; continuing without explicit GCC hint"
+            fi
+          else
+            echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
+          fi
+
+      - name: Debug Clang toolchain hint
+        if: matrix.compiler == 'clang'
+        run: |
+          echo "clang binary: $(command -v "${CXX:-clang++}")"
+          "${CXX:-clang++}" --version | head -n 2
+          echo "CLANG_GCC_CMAKE_ARG='${CLANG_GCC_CMAKE_ARG}'"
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-
+            ${{ runner.os }}-${{ matrix.os }}-${{ matrix.compiler }}-ccache-
+            ${{ runner.os }}-${{ matrix.os }}-ccache-
+
+      - name: Configure
+        run: |
+          rm -rf build
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=OFF \
+            ${CLANG_GCC_CMAKE_ARG}
+
+      - name: Build
+        run: |
+          cmake --build build --parallel
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+        run: |
+          ctest --test-dir build --output-on-failure --parallel 2 --timeout 600
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-logs-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/CMakeCache.txt
+
+  sanitizers:
+    name: sanitizers (ubuntu-24.04, ${{ matrix.compiler }}, Debug)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build pkg-config ccache git ruby-full \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
+            libtclap-dev \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Install GCC toolchain
+        if: matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get install -y g++
+
+      - name: Install Clang toolchain
+        if: matrix.compiler == 'clang'
+        run: |
+          sudo apt-get install -y clang g++
+
+      - name: Configure compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang" >> "$GITHUB_ENV"
+            echo "CXX=clang++" >> "$GITHUB_ENV"
+          else
+            echo "CC=gcc" >> "$GITHUB_ENV"
+            echo "CXX=g++" >> "$GITHUB_ENV"
+          fi
+
+      - name: Detect gcc-install-dir for Clang
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            GCC_INSTALL_DIR="$(
+              ls -d /usr/lib/gcc/*/* 2>/dev/null | while read -r d; do
+                ver="$(basename "$d")"
+                if [ -d "/usr/include/c++/$ver" ]; then
+                  echo "$d"
+                fi
+              done | sort -V | tail -n 1
+            )"
+
+            if [ -z "$GCC_INSTALL_DIR" ]; then
+              echo "Unable to detect a usable gcc-install-dir for clang"
+              exit 1
+            fi
+
+            if "${CXX:-clang++}" --help 2>/dev/null | grep -q -- '--gcc-install-dir'; then
+              echo "CLANG_GCC_CMAKE_ARG=-DUCONV_CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
+              echo "Using clang --gcc-install-dir: $GCC_INSTALL_DIR"
+            else
+              echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
+              echo "Clang does not expose --gcc-install-dir; continuing without explicit GCC hint"
+            fi
+          else
+            echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
+          fi
+
+      - name: Debug Clang toolchain hint
+        if: matrix.compiler == 'clang'
+        run: |
+          echo "clang binary: $(command -v "${CXX:-clang++}")"
+          "${CXX:-clang++}" --version | head -n 2
+          echo "CLANG_GCC_CMAKE_ARG='${CLANG_GCC_CMAKE_ARG}'"
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-sanitizers-${{ matrix.compiler }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-sanitizers-${{ matrix.compiler }}-ccache-
+            ${{ runner.os }}-sanitizers-ccache-
+
+      - name: Configure
+        run: |
+          rm -rf build-asan
+          cmake -S . -B build-asan -G Ninja \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=ON \
+            -DBUILD_DOCS=OFF \
+            ${CLANG_GCC_CMAKE_ARG}
+
+      - name: Build
+        run: |
+          cmake --build build-asan --parallel
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          ctest --test-dir build-asan --output-on-failure --parallel 2 --timeout 600
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-logs-sanitizers-${{ matrix.compiler }}
+          path: |
+            build-asan/Testing/Temporary/LastTest.log
+            build-asan/CMakeCache.txt
+
+  coverage-gate:
+    name: coverage-gate (ubuntu-24.04, gcc, Debug)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build pkg-config ccache git ruby-full \
+            gcovr \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
+            libtclap-dev \
+            nlohmann-json3-dev \
+            libgtest-dev \
+            g++
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-coverage-gate-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-coverage-gate-ccache-
+            ${{ runner.os }}-ccache-
+
+      - name: Configure
+        run: |
+          rm -rf build-cov
+          cmake -S . -B build-cov -G Ninja \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="--coverage -O0 -g -DNDEBUG" \
+            -DCMAKE_CXX_FLAGS="--coverage -O0 -g -DNDEBUG" \
+            -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+            -DCMAKE_SHARED_LINKER_FLAGS="--coverage" \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=OFF \
+            -DUCONV_ENABLE_FUZZ_SMOKE_TESTS=OFF
+
+      - name: Build
+        run: |
+          cmake --build build-cov --parallel
+
+      - name: Test
+        run: |
+          ctest --test-dir build-cov --output-on-failure --parallel 2 --timeout 600
+
+      - name: Run examples for coverage
+        run: |
+          ./build-cov/Examples/basic_conversion
+          ./build-cov/Examples/physics
+          ./build-cov/Examples/dynamic_units
+
+      - name: Coverage gate (uconv core)
+        run: |
+          gcovr -r . build-cov \
+            --filter 'include/uconv[.]H$' \
+            --filter 'lib/uconv[.]cc$' \
+            --exclude-throw-branches \
+            --exclude-unreachable-branches \
+            --txt build-cov/coverage-summary.txt \
+            --txt-summary \
+            --txt-metric branch \
+            --print-summary \
+            --fail-under-line 80 \
+            --fail-under-branch 75
+
+          gcovr -r . build-cov \
+            --filter 'include/uconv[.]H$' \
+            --filter 'lib/uconv[.]cc$' \
+            --exclude-throw-branches \
+            --exclude-unreachable-branches \
+            --xml-pretty \
+            --output build-cov/coverage.xml
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-gate-artifacts
+          path: |
+            build-cov/coverage-summary.txt
+            build-cov/coverage.xml
+
+  docs-check:
+    name: docs-check (Doxygen warnings gate)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build git ruby-full \
+            doxygen graphviz g++ \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Configure
+        run: |
+          rm -rf build-docs
+          cmake -S . -B build-docs -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=ON
+
+      - name: Build docs
+        run: |
+          set -euo pipefail
+          cmake --build build-docs --target docs --parallel
+          test -f build-docs/docs/doxygen/html/index.html
+          test -f build-docs/generated/units/units_catalog.md
+          test -f build-docs/docs/doxygen/html/units_catalog.html
+
+          CATALOG=build-docs/generated/units/units_catalog.md
+          grep -q '^| Quantity | Symbol | LaTeX | Units | Description | DSL source |$' "$CATALOG"
+          grep -q '^| Unit | Symbol | LaTeX | Range | Description | DSL source |$' "$CATALOG"
+
+          pq_count=$(grep -E '^- Physical quantities: [0-9]+$' "$CATALOG" | awk '{print $4}')
+          unit_count=$(grep -E '^- Units: [0-9]+$' "$CATALOG" | awk '{print $3}')
+          conv_count=$(grep -E '^- Conversions: [0-9]+$' "$CATALOG" | awk '{print $3}')
+
+          test -n "$pq_count"
+          test -n "$unit_count"
+          test -n "$conv_count"
+          test "$pq_count" -gt 0
+          test "$unit_count" -gt 0
+          test "$conv_count" -gt 0
+
+          # Strong regression gate: fail if catalog coverage drops too much.
+          test "$pq_count" -ge 10
+          test "$unit_count" -ge 40
+          test "$conv_count" -ge 100
+
+      - name: Gate on Doxygen warnings
+        run: |
+          WARN_FILE=build-docs/docs/doxygen/warnings.log
+          if [ -s "$WARN_FILE" ]; then
+            echo "Doxygen warnings were found:"
+            cat "$WARN_FILE"
+            exit 1
+          fi
+          echo "No Doxygen warnings."
+
+      - name: Upload docs warnings on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doxygen-warnings
+          path: build-docs/docs/doxygen/warnings.log
+
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-24.04
+    needs:
+      - build-and-test
+      - sanitizers
+      - coverage-gate
+      - docs-check
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          set -euo pipefail
+          echo "build-and-test result: ${{ needs.build-and-test.result }}"
+          echo "sanitizers result: ${{ needs.sanitizers.result }}"
+          echo "coverage-gate result: ${{ needs.coverage-gate.result }}"
+          echo "docs-check result: ${{ needs.docs-check.result }}"
+
+          is_ok() {
+            [ "$1" = "success" ] || [ "$1" = "skipped" ]
+          }
+
+          all_ok=1
+
+          check_job() {
+            job_name="$1"
+            job_result="$2"
+            if ! is_ok "$job_result"; then
+              echo "Job '$job_name' did not succeed (result: $job_result)"
+              all_ok=0
+            fi
+          }
+
+          check_job "build-and-test" "${{ needs.build-and-test.result }}"
+          check_job "sanitizers" "${{ needs.sanitizers.result }}"
+          check_job "coverage-gate" "${{ needs.coverage-gate.result }}"
+          check_job "docs-check" "${{ needs.docs-check.result }}"
+
+          if [ "$all_ok" -ne 1 ]; then
+            echo "CI failed"
+            exit 1
+          fi
+          echo "CI passed"

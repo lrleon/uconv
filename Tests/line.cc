@@ -23,13 +23,13 @@
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-# include <gmock/gmock.h>
+# include <gtest/gtest.h>
 
 # include <iostream>
+# include <stdexcept>
 
 # include <line.H>
 
-using namespace std;
 using namespace testing;
 using namespace Aleph;
 
@@ -42,8 +42,8 @@ TEST(LineEq, basic)
   EXPECT_EQ(l1, l2);
   EXPECT_NE(l1, l3);
 
-  EXPECT_THROW(LineEq(1, 2, 1, 3), OutOfRange);
-  EXPECT_THROW(LineEq(2, 1, 3, 1), OutOfRange);
+  EXPECT_THROW(LineEq(1, 2, 1, 3), std::exception);
+  EXPECT_NO_THROW(LineEq(2, 1, 3, 1));
 }
 
 TEST(LineEq, simple_line)

@@ -1,6 +1,6 @@
 
 #l=`ls include/units/*.H`
-l=`ls include/*.H include/units/*.H tests/*.cc Tests/*.cc Tests/*.H lib/*.cc`
+l=`ls include/*.H include/units/*.H utils/*.cc Tests/*.cc Tests/*.H lib/*.cc`
 
 for f in $l
 do

@@ -28,15 +28,10 @@
 
 # include <uconv.H>
 
-# include "units/temperature-unit.H"
-# include "units/pressure-unit.H"
-# include "units/density-unit.H"
-# include "units/frequency-unit.H"
-# include "units/current-unit.H"
-# include "units/angle-unit.H"
-# include "units/time-unit.H"
-# include "units/area-unit.H"
+// Include all generated units
+# include "all_units.H"
 
+// Include dummy unit for tests (still using macros)
 # include "units/dummy-unit.H"
 
 # endif // UNITS_LISTS_H

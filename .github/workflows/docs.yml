@@ -1,0 +1,116 @@
+name: Docs (Doxygen)
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: build-and-deploy (GitHub Pages)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build git ruby-full \
+            doxygen graphviz g++ \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Configure
+        run: |
+          rm -rf build
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=ON
+
+      - name: Build Doxygen HTML
+        run: |
+          set -euo pipefail
+          cmake --build build --target docs --parallel
+          test -f build/docs/doxygen/html/index.html
+          test -f build/generated/units/units_catalog.md
+          test -f build/docs/doxygen/html/units_catalog.html
+
+          CATALOG=build/generated/units/units_catalog.md
+          grep -q '^| Quantity | Symbol | LaTeX | Units | Description | DSL source |$' "$CATALOG"
+          grep -q '^| Unit | Symbol | LaTeX | Range | Description | DSL source |$' "$CATALOG"
+
+          pq_count=$(grep -E '^- Physical quantities: [0-9]+$' "$CATALOG" | awk '{print $4}')
+          unit_count=$(grep -E '^- Units: [0-9]+$' "$CATALOG" | awk '{print $3}')
+          conv_count=$(grep -E '^- Conversions: [0-9]+$' "$CATALOG" | awk '{print $3}')
+
+          test -n "$pq_count"
+          test -n "$unit_count"
+          test -n "$conv_count"
+          test "$pq_count" -gt 0
+          test "$unit_count" -gt 0
+          test "$conv_count" -gt 0
+
+          # Strong regression gate: fail if catalog coverage drops too much.
+          test "$pq_count" -ge 10
+          test "$unit_count" -ge 40
+          test "$conv_count" -ge 100
+
+      - name: Gate on Doxygen warnings
+        run: |
+          WARN_FILE=build/docs/doxygen/warnings.log
+          if [ -s "$WARN_FILE" ]; then
+            echo "Doxygen warnings were found:"
+            cat "$WARN_FILE"
+            exit 1
+          fi
+          echo "No Doxygen warnings."
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/docs/doxygen/html
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

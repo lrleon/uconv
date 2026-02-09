@@ -1,0 +1,134 @@
+name: Full Analysis
+
+on:
+  schedule:
+    # Weekly on Sunday at 02:00 UTC.
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-analysis:
+    name: full-analysis (ubuntu-24.04, gcc, Release)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build pkg-config ccache git \
+            g++ ruby-full doxygen graphviz cppcheck \
+            libgmp-dev libmpfr-dev libgsl-dev libx11-dev \
+            libtclap-dev \
+            nlohmann-json3-dev \
+            libgtest-dev
+
+      - name: Checkout Aleph-w dependency
+        run: |
+          git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
+
+      - name: Build Aleph static library
+        run: |
+          cmake -S deps/Aleph-w -B deps/Aleph-w/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build deps/Aleph-w/build --target Aleph --parallel
+          ALEPH_LIB="$(find deps/Aleph-w/build -name libAleph.a | head -n 1)"
+          test -n "$ALEPH_LIB"
+          cp "$ALEPH_LIB" deps/Aleph-w/libAleph.a
+          ls -l deps/Aleph-w/libAleph.a
+          echo "ALEPHW_DIR=${GITHUB_WORKSPACE}/deps/Aleph-w" >> "$GITHUB_ENV"
+
+      - name: Configure
+        run: |
+          rm -rf build-full
+          cmake -S . -B build-full -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DALEPHW="${ALEPHW_DIR}" \
+            -DJSON_PATH=/usr \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_DOCS=ON
+
+      - name: Build
+        run: |
+          cmake --build build-full --parallel
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+        run: |
+          ctest --test-dir build-full --output-on-failure --parallel 2 --timeout 600
+
+      - name: cppcheck (full repo)
+        run: |
+          rm -f cppcheck.xml cppcheck.txt
+          cppcheck \
+            --enable=warning,performance,portability \
+            --inconclusive \
+            --inline-suppr \
+            --suppress=missingIncludeSystem \
+            --error-exitcode=1 \
+            --xml --xml-version=2 \
+            -I include \
+            -I "${ALEPHW_DIR}" \
+            . 2> cppcheck.xml
+          cppcheck \
+            --enable=warning,performance,portability \
+            --inconclusive \
+            --inline-suppr \
+            --suppress=missingIncludeSystem \
+            -I include \
+            -I "${ALEPHW_DIR}" \
+            . 2> cppcheck.txt || true
+
+      - name: Doxygen (collect warnings)
+        run: |
+          set -euo pipefail
+          cmake --build build-full --target docs --parallel
+          test -f build-full/generated/units/units_catalog.md
+          test -f build-full/docs/doxygen/html/units_catalog.html
+
+          CATALOG=build-full/generated/units/units_catalog.md
+          grep -q '^| Quantity | Symbol | LaTeX | Units | Description | DSL source |$' "$CATALOG"
+          grep -q '^| Unit | Symbol | LaTeX | Range | Description | DSL source |$' "$CATALOG"
+
+          pq_count=$(grep -E '^- Physical quantities: [0-9]+$' "$CATALOG" | awk '{print $4}')
+          unit_count=$(grep -E '^- Units: [0-9]+$' "$CATALOG" | awk '{print $3}')
+          conv_count=$(grep -E '^- Conversions: [0-9]+$' "$CATALOG" | awk '{print $3}')
+
+          test -n "$pq_count"
+          test -n "$unit_count"
+          test -n "$conv_count"
+          test "$pq_count" -gt 0
+          test "$unit_count" -gt 0
+          test "$conv_count" -gt 0
+
+          # Strong regression gate: fail if catalog coverage drops too much.
+          test "$pq_count" -ge 10
+          test "$unit_count" -ge 40
+          test "$conv_count" -ge 100
+
+          cp build-full/docs/doxygen/warnings.log doxygen_warnings.log
+          cp build-full/generated/units/units_catalog.md units_catalog.md
+
+      - name: Upload full analysis reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-analysis-reports
+          path: |
+            cppcheck.xml
+            cppcheck.txt
+            doxygen_warnings.log
+            units_catalog.md

@@ -29,10 +29,10 @@
 
 struct UnitTest
 {
-  const string csv_name = "No-defined";
-  const size_t csv_line = 0;
-  const string src_unit_name = "No-defined";
-  const string tgt_unit_name = "No-defined";
+  const std::string csv_name = "No-defined";
+  const std::size_t csv_line = 0;
+  const std::string src_unit_name = "No-defined";
+  const std::string tgt_unit_name = "No-defined";
   const double value = 0;
   const double expected = 0;
   const double tolerance = 0;
@@ -46,8 +46,8 @@ public:
 
   UnitTest() {}
 
-  UnitTest(const string & csv_name, size_t csv_line,
-	   const string & src_unit_name, const string & tgt_unit_name,
+  UnitTest(const std::string & csv_name, std::size_t csv_line,
+	   const std::string & src_unit_name, const std::string & tgt_unit_name,
 	   double value, double expected, double tolerance)
     : csv_name(csv_name), csv_line(csv_line), src_unit_name(src_unit_name),
       tgt_unit_name(tgt_unit_name), value(value), expected(expected),
@@ -61,22 +61,22 @@ public:
   bool pass()
   {
     result = convert();
-    error = fabs(expected - result)/expected;
+    error = std::fabs(expected - result)/expected;
     return error <= tolerance;
   }
 
-  string to_string() const
+  std::string to_string() const
   {
-    ostringstream s;
+    std::ostringstream s;
 
-    s.precision(numeric_limits<double>::max_digits10);
-    s << "line        = " << csv_line << endl
-      << "source unit = " << src_unit_name << endl
-      << "target unit = " << tgt_unit_name << endl
-      << "value       = " << value << endl
-      << "expected    = " << expected << endl
-      << "result      = " << result << endl
-      << "error       = " << error << endl
+    s.precision(std::numeric_limits<double>::max_digits10);
+    s << "line        = " << csv_line << std::endl
+      << "source unit = " << src_unit_name << std::endl
+      << "target unit = " << tgt_unit_name << std::endl
+      << "value       = " << value << std::endl
+      << "expected    = " << expected << std::endl
+      << "result      = " << result << std::endl
+      << "error       = " << error << std::endl
       << "tolerance   = " << tolerance;
 
     return s.str();
@@ -86,13 +86,13 @@ public:
 class UnitTester
 {
   DynList<UnitTest> test_list;
-  DynList<string> failed_list;
-  DynList<string> passed_list;
+  DynList<std::string> failed_list;
+  DynList<std::string> passed_list;
 
 public:
 
-  void define_test(const string & csv_name, size_t csv_line,
-		   const string & src_unit_name, const string & tgt_unit_name,
+  void define_test(const std::string & csv_name, std::size_t csv_line,
+		   const std::string & src_unit_name, const std::string & tgt_unit_name,
 		   double value, double expected, double tolerance)
   {
     test_list.emplace(csv_name, csv_line, src_unit_name, tgt_unit_name,
@@ -111,11 +111,11 @@ public:
       }
   }
 
-  static void report(const DynList<string> & l)
+  static void report(const DynList<std::string> & l)
   {
      for (auto it = l.get_it(); it.has_curr(); it.next())
-      cout << it.get_curr() << endl
-	   << endl;
+      std::cout << it.get_curr() << std::endl
+	   << std::endl;
   }
   
   void report_failed() const

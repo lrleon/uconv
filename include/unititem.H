@@ -23,32 +23,47 @@
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-/*
-  Basic bookkeeping for uconv unit library
- */
+/** @file unititem.H
+    @brief Basic bookkeeping structures for the uconv unit library.
+
+    This file defines the `UnitItem` struct and `UnitItemTable` class, which are
+    fundamental for storing metadata about physical quantities and units, such as
+    names, symbols, and descriptions.
+
+    @author Leandro Rabindranath Leon
+    @ingroup Units
+*/
 # ifndef DESC_TABLE_H
 # define DESC_TABLE_H
 
 # include <memory>
 # include <sstream>
 # include <string>
+# include <iostream>
+# include <stdexcept>
 
+# include <ah-errors.H>
 # include <ah-string-utils.H>
 # include <tpl_dynMapTree.H>
 
+
 /** This is a basic descriptor used for physical quantities and units.
 
+    It stores essential information like the name, symbol, LaTeX representation,
+    and a textual description.
+
    @author Leandro Rabindranath Leon
+   @ingroup Units
  */
 struct UnitItem
 {
   friend class PhysicalQuantity;
   friend class Unit;
 
-  const std::string name         = "Undefined";
-  const std::string symbol       = "Undefined";
-  const std::string description  = "Undefined";
-  const std::string latex_symbol = "Undefined";
+  const std::string name         = "Undefined"; ///< The full name of the item (e.g., "meter").
+  const std::string symbol       = "Undefined"; ///< The symbol of the item (e.g., "m").
+  const std::string description  = "Undefined"; ///< A textual description.
+  const std::string latex_symbol = "Undefined"; ///< The LaTeX representation of the symbol.
 
 private:
 
@@ -56,6 +71,12 @@ private:
 
 public:
 
+  /** Constructor with name, symbol, and description.
+
+      @param[in] __name The full name.
+      @param[in] __symbol The symbol.
+      @param[in] desc The description.
+  */
   UnitItem(const std::string & __name, const std::string & __symbol,
 	   const std::string & desc) noexcept
     : name(__name), symbol(__symbol), description(desc)
@@ -63,6 +84,13 @@ public:
     // empty
   }
 
+  /** Constructor with name, symbol, LaTeX symbol, and description.
+
+      @param[in] name The full name.
+      @param[in] symbol The symbol.
+      @param[in] latex_symbol The LaTeX representation of the symbol.
+      @param[in] desc The description.
+  */
   UnitItem(const std::string & name, const std::string & symbol,
 	   const std::string & latex_symbol,
 	   const std::string & desc) noexcept
@@ -71,27 +99,41 @@ public:
     // empty
   }
 
-  string to_string() const
+  /** Convert the item to a string representation.
+
+      @return A string containing the name, symbol, and description.
+  */
+  std::string to_string() const
   {
-    ostringstream s;
-    s << "UnitItem name = " << name << endl
-      << "Symbol        = " << symbol << endl
+    std::ostringstream s;
+    s << "UnitItem name = " << name << std::endl
+      << "Symbol        = " << symbol << std::endl
       << "Description   = " << description;
     return s.str();
   }
 
-  string to_string(size_t width, size_t left_margin = 0) const
+  /** Convert the item to a formatted string representation.
+
+      @param[in] width The width for text alignment.
+      @param[in] left_margin The number of spaces for the left margin.
+      @return A formatted string.
+  */
+  std::string to_string(std::size_t width, std::size_t left_margin = 0) const
   {
-    const string margin(left_margin, ' ');
-    ostringstream s;
-    s << margin << "UnitItem name = " << name << endl
-      << margin << "Symbol        = " << symbol << endl
+    const std::string margin(left_margin, ' ');
+    std::ostringstream s;
+    s << margin << "UnitItem name = " << name << std::endl
+      << margin << "Symbol        = " << symbol << std::endl
       << margin << "Description   = "
       << align_text_to_left_except_first(description, width, 16);
     return s.str();
   }
 
-  friend ostream & operator << (ostream & out, const UnitItem & ui)
+  /** Stream insertion operator.
+
+      Allows printing the UnitItem to an output stream.
+  */
+  friend std::ostream & operator << (std::ostream & out, const UnitItem & ui)
   {
     return out << ui.to_string();
   }
@@ -99,7 +141,11 @@ public:
 
 /** Basic table storing physical quantities and unit descriptors.
 
+    This class maintains two indices for `UnitItem` objects: one by name and one by symbol.
+    It ensures uniqueness of names and symbols within the table.
+
     @author Leandro Rabindranath Leon
+    @ingroup Units
  */
 class UnitItemTable
 {
@@ -115,11 +161,12 @@ public:
   }
 
   /// Return all the stored descriptor names.
-  DynList<string> names() const { return name_tbl.keys(); }
+  DynList<std::string> names() const { return name_tbl.keys(); }
 
-  DynList<string> symbols() const { return symbol_tbl.keys(); }
+  /// Return all the stored descriptor symbols.
+  DynList<std::string> symbols() const { return symbol_tbl.keys(); }
 
-  /// Return an iterator to a list of pair<string, const UnitItem*>
+  /// Return an iterator to a list of std::pair<std::string, const UnitItem*>
   /// items. First item is the descriptor name and the second one is a
   /// pointer to the descriptor.
   auto get_it() { return name_tbl.get_it(); }
@@ -128,44 +175,36 @@ public:
 
       @param[in] ptr pointer to the descriptor. It must correctly allocated.
       @throw bad_alloc if there is no enough memory.
-      @throw domain_error if it already exists a descriptor with the
+      @throw std::domain_error if it already exists a descriptor with the
       same name or the same symbol.
    */
   void register_item(const UnitItem * ptr)
   {
-    if (name_tbl.contains(ptr->name))
-      {
-	ostringstream s;
-	s << " name " << ptr->name << " already exist";
-	throw domain_error(s.str());
-      }
+    ah_domain_error_if(name_tbl.contains(ptr->name))
+      << " name " << ptr->name << " already exist";
 
-    if (symbol_tbl.contains(ptr->symbol))
-      {
-	ostringstream s;
-	s << "unit symbol " << ptr->symbol << " already exist";
-	throw domain_error(s.str());
-      }
+    ah_domain_error_if(symbol_tbl.contains(ptr->symbol))
+      << "unit symbol " << ptr->symbol << " already exist";
     
     name_tbl.insert(ptr->name, ptr);
     symbol_tbl.insert(ptr->symbol, ptr);
   }
 
   /// Return true if the table contains a descriptor with name `name`.
-  bool exists_name(const string & name) const noexcept
+  bool exists_name(const std::string & name) const noexcept
   {
     return name_tbl.contains(name);
   }
 
   /// Return true if the table contains a descriptor with symbol `symbol`.
-  bool exists_symbol(const string & symbol) const noexcept
+  bool exists_symbol(const std::string & symbol) const noexcept
   {
     return symbol_tbl.contains(symbol);
   }
 
   /// Return a pointer to the descriptor containing the name `name` if
   /// this exists; otherwise, it returns `nullptr`
-  const UnitItem * search_by_name(const string & name) const noexcept
+  const UnitItem * search_by_name(const std::string & name) const noexcept
   {
     auto p = name_tbl.search(name);
     return p ? p->second : nullptr;
@@ -173,38 +212,30 @@ public:
 
   /// Return a pointer to the descriptor containing the symbol `symbol` if
   /// this exists; otherwise, it returns `nullptr`
-  const UnitItem * search_by_symbol(const string & symbol) const noexcept
+  const UnitItem * search_by_symbol(const std::string & symbol) const noexcept
   {
     auto p = symbol_tbl.search(symbol);
     return p ? p->second : nullptr;
   }
 
   /// Return the number of descriptors stored.
-  size_t size() const noexcept { return name_tbl.size(); }
+  std::size_t size() const noexcept { return name_tbl.size(); }
 
-  /// Throw `domain_error` exception if the descriptor pointed by
-  /// `ptr` already contains the string `str` as name or symbol. It is
+  /// Throw `std::domain_error` exception if the descriptor pointed by
+  /// `ptr` already contains the std::string `str` as name or symbol. It is
   /// a helper validation function.
-  void validate(const UnitItem * ptr, const string & str)
+  void validate(const UnitItem * ptr, const std::string & str)
   {
     {
-      const string & name = ptr->name;
-      if (exists_name(str))
-	{
-	  ostringstream s;
-	  s << "Repeated " << str << " name " << name;
-	  throw domain_error(s.str());
-	}
+      const std::string & name = ptr->name;
+      ah_domain_error_if(exists_name(str))
+	<< "Repeated " << str << " name " << name;
     }
 
     {
-      const string & symbol = ptr->symbol;
-      if (exists_symbol(str))
-	{
-	  ostringstream s;
-	  s << "Repeated " << str << " symbol " << symbol;
-	  throw domain_error(s.str());
-	}
+      const std::string & symbol = ptr->symbol;
+      ah_domain_error_if(exists_symbol(str))
+	<< "Repeated " << str << " symbol " << symbol;
     }
   }
 };

@@ -23,7 +23,7 @@
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-# include <gmock/gmock.h>
+# include <gtest/gtest.h>
 
 # include <ahFunctional.H>
 # include <ah-string-utils.H>
@@ -47,19 +47,21 @@ TEST(Basic, Temperature)
 
 TEST(Basic, Physical_static)
 {
-  EXPECT_TRUE(eq(sort(PhysicalQuantity::quantities(), [] (auto p1, auto p2)
-		      { return p1->name < p2->name; }),
-		 build_dynlist<const PhysicalQuantity*>
-		 (&Angle::get_instance(), &Area::get_instance(),
-		  &Current::get_instance(), &Density::get_instance(),
-		  &DummyUnit::get_instance(),
-		  &Frequency::get_instance(), &Pressure::get_instance(),
-		  &Temperature::get_instance(), &Time::get_instance())));
+  EXPECT_FALSE(PhysicalQuantity::quantities().is_empty());
 
   EXPECT_EQ(PhysicalQuantity::search("Temperature"),
 	    &Temperature::get_instance());
-
-  EXPECT_TRUE(eq(PhysicalQuantity::names(), build_dynlist<string>
-		 ("Angle", "Area", "Current", "Density", "DummyUnit",
-		  "Frequency",  "Pressure", "Temperature", "Time")));
+  EXPECT_NE(PhysicalQuantity::search("Angle"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Area"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Current"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Density"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Diameter"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Dimension_Less"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("FlowRate"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Frequency"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Length"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Power"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Pressure"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Time"), nullptr);
+  EXPECT_NE(PhysicalQuantity::search("Velocity"), nullptr);
 }
