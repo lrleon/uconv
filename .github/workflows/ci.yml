@@ -79,9 +79,13 @@ jobs:
               exit 1
             fi
 
-            echo "CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
-            echo "CLANG_GCC_CMAKE_ARG=-DUCONV_CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
-            echo "Using clang gcc-install-dir: $GCC_INSTALL_DIR"
+            if "${CXX:-clang++}" --help 2>/dev/null | grep -q -- '--gcc-install-dir'; then
+              echo "CLANG_GCC_CMAKE_ARG=-DUCONV_CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
+              echo "Using clang --gcc-install-dir: $GCC_INSTALL_DIR"
+            else
+              echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
+              echo "Clang does not expose --gcc-install-dir; continuing without explicit GCC hint"
+            fi
           else
             echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
           fi
@@ -213,9 +217,13 @@ jobs:
               exit 1
             fi
 
-            echo "CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
-            echo "CLANG_GCC_CMAKE_ARG=-DUCONV_CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
-            echo "Using clang gcc-install-dir: $GCC_INSTALL_DIR"
+            if "${CXX:-clang++}" --help 2>/dev/null | grep -q -- '--gcc-install-dir'; then
+              echo "CLANG_GCC_CMAKE_ARG=-DUCONV_CLANG_GCC_INSTALL_DIR=$GCC_INSTALL_DIR" >> "$GITHUB_ENV"
+              echo "Using clang --gcc-install-dir: $GCC_INSTALL_DIR"
+            else
+              echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
+              echo "Clang does not expose --gcc-install-dir; continuing without explicit GCC hint"
+            fi
           else
             echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
           fi

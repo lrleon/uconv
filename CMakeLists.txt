@@ -4,8 +4,15 @@ cmake_minimum_required(VERSION 3.10)
 # a usable libstdc++ toolchain during compiler checks (try-compile).
 set(UCONV_CLANG_GCC_INSTALL_DIR "${UCONV_CLANG_GCC_INSTALL_DIR}" CACHE STRING
     "Path passed to Clang via --gcc-install-dir (e.g. /usr/lib/gcc/x86_64-linux-gnu/13)")
+set(UCONV_CLANG_GCC_TOOLCHAIN "${UCONV_CLANG_GCC_TOOLCHAIN}" CACHE STRING
+    "Path passed to Clang via --gcc-toolchain (e.g. /usr)")
 if(UCONV_CLANG_GCC_INSTALL_DIR)
     set(_UCONV_CLANG_GCC_FLAG "--gcc-install-dir=${UCONV_CLANG_GCC_INSTALL_DIR}")
+elseif(UCONV_CLANG_GCC_TOOLCHAIN)
+    set(_UCONV_CLANG_GCC_FLAG "--gcc-toolchain=${UCONV_CLANG_GCC_TOOLCHAIN}")
+endif()
+
+if(DEFINED _UCONV_CLANG_GCC_FLAG)
     set(CMAKE_C_FLAGS_INIT "${CMAKE_C_FLAGS_INIT} ${_UCONV_CLANG_GCC_FLAG}")
     set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} ${_UCONV_CLANG_GCC_FLAG}")
     set(CMAKE_EXE_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS_INIT} ${_UCONV_CLANG_GCC_FLAG}")
@@ -45,8 +52,12 @@ include_directories(${JSON_PATH}/include)
 # Compilation options
 add_compile_options(-Wall -Wextra -Wcast-align -Wno-sign-compare -Wno-write-strings -Wno-parentheses)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND UCONV_CLANG_GCC_INSTALL_DIR)
-    message(STATUS "Using Clang gcc-install-dir: ${UCONV_CLANG_GCC_INSTALL_DIR}")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(UCONV_CLANG_GCC_INSTALL_DIR)
+        message(STATUS "Using Clang gcc-install-dir: ${UCONV_CLANG_GCC_INSTALL_DIR}")
+    elseif(UCONV_CLANG_GCC_TOOLCHAIN)
+        message(STATUS "Using Clang gcc-toolchain: ${UCONV_CLANG_GCC_TOOLCHAIN}")
+    endif()
 endif()
 
 # Generated artifacts live in the build tree.
