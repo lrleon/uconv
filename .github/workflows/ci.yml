@@ -90,6 +90,13 @@ jobs:
             echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
           fi
 
+      - name: Debug Clang toolchain hint
+        if: matrix.compiler == 'clang'
+        run: |
+          echo "clang binary: $(command -v "${CXX:-clang++}")"
+          "${CXX:-clang++}" --version | head -n 2
+          echo "CLANG_GCC_CMAKE_ARG='${CLANG_GCC_CMAKE_ARG}'"
+
       - name: Checkout Aleph-w dependency
         run: |
           git clone --depth 1 https://github.com/lrleon/Aleph-w.git deps/Aleph-w
@@ -227,6 +234,13 @@ jobs:
           else
             echo "CLANG_GCC_CMAKE_ARG=" >> "$GITHUB_ENV"
           fi
+
+      - name: Debug Clang toolchain hint
+        if: matrix.compiler == 'clang'
+        run: |
+          echo "clang binary: $(command -v "${CXX:-clang++}")"
+          "${CXX:-clang++}" --version | head -n 2
+          echo "CLANG_GCC_CMAKE_ARG='${CLANG_GCC_CMAKE_ARG}'"
 
       - name: Checkout Aleph-w dependency
         run: |
