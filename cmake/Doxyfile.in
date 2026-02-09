@@ -55,3 +55,7 @@ SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
 STRIP_FROM_PATH        = @CMAKE_SOURCE_DIR@ \
                          @CMAKE_BINARY_DIR@
+
+# Keep inheritance/call graphs enabled while avoiding warning spam for large
+# generated hierarchies (e.g. Unit-derived generated types).
+DOT_GRAPH_MAX_NODES    = 1000

@@ -295,7 +295,11 @@ def cpp_string(value)
 end
 
 def doxygen_text(value)
-  value.to_s.gsub(/\s+/, " ").strip.gsub("*/", "* /")
+  value.to_s
+       .gsub(/\s+/, " ")
+       .strip
+       .gsub("*/", "* /")
+       .gsub(/\\/) { "\\\\" }
 end
 
 def doxygen_code(value)
